@@ -135,28 +135,33 @@ body {
 }
 
 .markdown-content code {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 0.2em 0.4em;
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.2em 0.5em;
+  border-radius: 6px;
   font-size: 0.9em;
-  font-family: 'Courier New', monospace;
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
 }
 
 .markdown-content pre {
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  padding: 1em;
-  overflow-x: auto;
-  margin: 1em 0;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  overflow-x: visible !important;
+  margin: 0 !important;
 }
 
 .markdown-content pre code {
-  background: transparent;
-  padding: 0;
-  border: none;
-  border-radius: 0;
+  background: transparent !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  color: #e2e8f0 !important;
+  display: block;
+  line-height: 1.6;
+  font-size: 0.875rem;
 }
 
 .markdown-content blockquote {

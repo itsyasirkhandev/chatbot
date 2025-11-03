@@ -4,14 +4,24 @@ A beautiful AI-powered chatbot built with Next.js, LangChain, and Google Gemini 
 
 ## Features
 
+### Core Features
 - ✨ **Glassmorphism Design** - Premium translucent UI with backdrop blur effects
 - 🚀 **Streaming Responses** - Real-time token streaming for instant feedback
 - 🤖 **Google Gemini 2.0 Flash** - Powered by Google's latest fast AI model
 - 📱 **Responsive Design** - Works beautifully on desktop and mobile
 - 🎨 **Modern Typography** - Bricolage Grotesque headings + Inter body text
+
+### Content & Formatting
 - 📝 **Markdown Support** - Beautiful formatting with code syntax highlighting
+- 📋 **Copy Code Button** - One-click copy for code blocks with visual feedback
+- 🎯 **Suggested Prompts** - Quick-start examples to get conversations flowing
+
+### User Experience
 - ♿ **Accessibility First** - WCAG compliant with screen reader support, keyboard navigation, and ARIA labels
 - 🧠 **Conversation Memory** - Chatbot remembers your entire conversation for contextual responses
+- 💾 **Persistent History** - Conversations saved to localStorage, resume after refresh
+- 🗑️ **Clear Conversation** - Reset chat with confirmation dialog
+- ⏹️ **Stop Generation** - Cancel AI responses mid-stream
 
 ## Tech Stack
 
@@ -190,26 +200,88 @@ The chatbot supports rich formatting in responses:
 
 Try asking: "Show me a Python hello world example" or "Create a markdown table"
 
-## Conversation Management
+## Feature Deep Dive
 
-**Current Implementation:**
-- ✅ In-memory conversation history (remembers context within session)
-- ✅ Full conversation sent to AI for contextual responses
-- ✅ Messages persist until page refresh
+### 📋 Copy Code Button
+Every code block includes a hover-activated copy button:
+- Click to copy code to clipboard
+- Visual feedback ("Copied!" message for 2 seconds)
+- Works with all programming languages
+- Preserves code formatting
 
-**Note:** Conversations are currently stored in browser memory and will reset when you refresh the page. For persistent history, see Future Enhancements below.
+### 🗑️ Clear Conversation
+Manage your chat history easily:
+- "Clear" button appears in header when messages exist
+- Confirmation dialog prevents accidental deletion
+- Removes all messages and clears localStorage
+- Returns focus to input for immediate use
+
+### 🎯 Suggested Prompts
+Get started faster with example prompts:
+- 6 curated suggestions displayed on empty chat
+- Click any prompt to auto-fill input
+- Covers common use cases (coding, explanations, creative)
+- Hover effects for better interactivity
+
+### 💾 LocalStorage Persistence
+Never lose your conversation:
+- Automatically saves all messages to browser storage
+- Conversations restored when you return
+- Persists across page refreshes
+- Clear button removes saved data
+
+### ⏹️ Stop Generation
+Take control of AI responses:
+- "Stop" button replaces "Send" during streaming
+- Immediately cancels ongoing request
+- Prevents wasted API calls
+- Red styling for clear visual distinction
+
+### 🧠 Conversation Memory
+Context-aware AI conversations:
+- Sends full conversation history with each message
+- AI can reference any previous message
+- Natural follow-up questions work seamlessly
+- Memory persists throughout session (and saved to localStorage)
+
+## User Guide
+
+### Getting Started
+1. Open the chatbot at http://localhost:3000
+2. Click a suggested prompt or type your own message
+3. Watch the AI response stream in real-time
+4. Continue the conversation - the AI remembers context
+
+### Tips & Tricks
+- **Code blocks**: Hover over code to see the copy button
+- **Stop responses**: Click "Stop" if response is too long
+- **Clear chat**: Use the trash icon in the header to start fresh
+- **Persistent history**: Your conversations are saved automatically
+- **Markdown support**: Ask for tables, lists, code examples - they'll be beautifully formatted
+
+### Example Prompts
+```
+"My name is Alice. I'm learning React."
+[AI responds]
+"What's my name and what am I learning?"
+[AI correctly remembers: "Your name is Alice and you're learning React"]
+```
 
 ## Future Enhancements
 
-- [ ] Conversation history persistence (localStorage or database)
-- [ ] Multi-conversation sidebar with session management
-- [ ] Message regeneration and editing
-- [ ] Export conversation as text/JSON
-- [ ] Clear conversation button
-- [ ] Dark/light theme toggle
-- [ ] Voice input/output
-- [ ] Image upload support
-- [ ] Copy code blocks button
+✅ = Implemented | 🔜 = Planned
+
+- ✅ Conversation history persistence (localStorage)
+- ✅ Clear conversation button
+- ✅ Copy code blocks button
+- 🔜 Multi-conversation sidebar with session management
+- 🔜 Message regeneration and editing
+- 🔜 Export conversation as Markdown/JSON
+- 🔜 Dark/light theme toggle
+- 🔜 Voice input/output
+- 🔜 Image upload support (Gemini Vision)
+- 🔜 Auto-resize textarea for long prompts
+- 🔜 Keyboard shortcuts (Ctrl+K to clear, etc.)
 
 ## License
 
