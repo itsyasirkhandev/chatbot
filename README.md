@@ -1,11 +1,11 @@
-# Gemini Chatbot with Glassmorphism UI
+# Gemini Chatbot
 
-A beautiful AI-powered chatbot built with Next.js, LangChain, and Google Gemini 2.0 Flash, featuring a premium glassmorphism design aesthetic.
+A beautiful AI-powered chatbot built with Next.js, LangChain, and Google Gemini 2.5 Flash, featuring a clean and minimal design aesthetic.
 
 ## Features
 
 ### Core Features
-- ✨ **Glassmorphism Design** - Premium translucent UI with backdrop blur effects
+- ✨ **Clean Minimal Design** - Beautiful light theme with gray backgrounds and solid styling
 - 🚀 **Streaming Responses** - Real-time token streaming for instant feedback
 - 🤖 **Google Gemini 2.0 Flash** - Powered by Google's latest fast AI model
 - 📱 **Responsive Design** - Works beautifully on desktop and mobile
@@ -23,12 +23,26 @@ A beautiful AI-powered chatbot built with Next.js, LangChain, and Google Gemini 
 - 🗑️ **Clear Conversation** - Reset chat with confirmation dialog
 - ⏹️ **Stop Generation** - Cancel AI responses mid-stream
 
+## Design Features
+
+### 🎨 Clean Light Theme
+- **Solid Gray Backgrounds** - Using subtle gray tones (#f3f4f6, #ffffff)
+- **Minimal Interface** - Clean cards and containers with subtle borders
+- **Readable Typography** - Optimized for long conversations and readability
+- **Accessible Colors** - High contrast for better visibility
+
+### 💡 Visual Elements
+- **Soft Shadows** - Subtle elevation with minimal shadows
+- **Hover States** - Smooth transitions and interactive feedback
+- **Consistent Spacing** - Proper padding and margins throughout
+- **Modern Icons** - Clean SVG icons for better clarity
+
 ## Tech Stack
 
 - **Framework**: Next.js 16 (App Router)
 - **Language**: TypeScript
-- **Styling**: Tailwind CSS with custom glassmorphism utilities
-- **AI**: LangChain + Google Gemini 2.0 Flash
+- **Styling**: Tailwind CSS with custom utility classes
+- **AI**: LangChain + Google Gemini 2.5 Flash
 - **Markdown**: react-markdown with GitHub Flavored Markdown & syntax highlighting
 - **Deployment**: Vercel (zero-config)
 
@@ -118,13 +132,19 @@ const model = new ChatGoogleGenerativeAI({
 });
 ```
 
-### Adjust Glassmorphism Effects
+### Modify Colors and Layout
 
-Edit `app/globals.css` to modify glass opacity and blur:
+Edit `app/globals.css` to customize the light theme:
 ```css
+/* Adjust background colors */
 .glass-surface {
-  background: rgba(255, 255, 255, 0.05); /* Adjust opacity */
-  backdrop-filter: blur(20px);           /* Adjust blur */
+  background: #f3f4f6; /* Change background color */
+  border: 1px solid #e5e7eb; /* Border color */
+}
+
+.glass-elevated {
+  background: #ffffff; /* Elevated surfaces */
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1); /* Shadow intensity */
 }
 ```
 
@@ -609,4 +629,4 @@ MIT
 - Built with [Next.js](https://nextjs.org/)
 - Powered by [LangChain](https://langchain.com/)
 - AI by [Google Gemini](https://deepmind.google/technologies/gemini/)
-- Design inspired by [Glassmorphism](https://uxdesign.cc/glassmorphism-in-user-interfaces-1f39bb1308c9)
+- Design inspired by clean, minimal UI principles with modern color schemes
