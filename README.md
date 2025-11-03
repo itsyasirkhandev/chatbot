@@ -11,6 +11,7 @@ A beautiful AI-powered chatbot built with Next.js, LangChain, and Google Gemini 
 - 🎨 **Modern Typography** - Bricolage Grotesque headings + Inter body text
 - 📝 **Markdown Support** - Beautiful formatting with code syntax highlighting
 - ♿ **Accessibility First** - WCAG compliant with screen reader support, keyboard navigation, and ARIA labels
+- 🧠 **Conversation Memory** - Chatbot remembers your entire conversation for contextual responses
 
 ## Tech Stack
 
@@ -72,10 +73,27 @@ gemini-chatbot/
 ## How It Works
 
 1. **User Input**: User types a message in the glass input field
-2. **API Request**: Frontend sends POST request to `/api/chat` endpoint
-3. **LangChain Processing**: API route initializes LangChain with Gemini model
-4. **Streaming**: Gemini streams response tokens via Server-Sent Events (SSE)
-5. **Real-time Display**: Frontend displays tokens as they arrive in glass message bubble
+2. **API Request**: Frontend sends POST request to `/api/chat` endpoint with full conversation history
+3. **LangChain Processing**: API route converts messages to LangChain format (HumanMessage/AIMessage)
+4. **Context-Aware Response**: Gemini processes entire conversation history for contextual understanding
+5. **Streaming**: Gemini streams response tokens via Server-Sent Events (SSE)
+6. **Real-time Display**: Frontend displays tokens as they arrive in glass message bubble
+
+### Conversation Memory
+
+The chatbot maintains conversation context by:
+- Storing all messages in React state
+- Sending complete conversation history with each request
+- Using LangChain's message format (HumanMessage for user, AIMessage for assistant)
+- Allowing the AI to reference previous messages
+
+**Example:**
+```
+You: My name is John
+AI: Nice to meet you, John! How can I help you today?
+You: What's my name?
+AI: Your name is John, as you mentioned earlier.
+```
 
 ## Customization
 
@@ -172,12 +190,22 @@ The chatbot supports rich formatting in responses:
 
 Try asking: "Show me a Python hello world example" or "Create a markdown table"
 
+## Conversation Management
+
+**Current Implementation:**
+- ✅ In-memory conversation history (remembers context within session)
+- ✅ Full conversation sent to AI for contextual responses
+- ✅ Messages persist until page refresh
+
+**Note:** Conversations are currently stored in browser memory and will reset when you refresh the page. For persistent history, see Future Enhancements below.
+
 ## Future Enhancements
 
-- [ ] Conversation history persistence (localStorage)
-- [ ] Multi-conversation sidebar
+- [ ] Conversation history persistence (localStorage or database)
+- [ ] Multi-conversation sidebar with session management
 - [ ] Message regeneration and editing
 - [ ] Export conversation as text/JSON
+- [ ] Clear conversation button
 - [ ] Dark/light theme toggle
 - [ ] Voice input/output
 - [ ] Image upload support
