@@ -27,6 +27,7 @@ export default function Home() {
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [provider, setProvider] = useState<'gemini' | 'huggingface' | 'deepseek'>('gemini');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -114,7 +115,7 @@ export default function Home() {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: conversationHistory }),
+        body: JSON.stringify({ messages: conversationHistory, provider }),
         signal: abortController.signal,
       });
 
@@ -213,18 +214,46 @@ export default function Home() {
           <h1 className="text-xl md:text-2xl font-semibold text-gray-900">
             Chat
           </h1>
-          {messages.length > 0 && (
-            <button
-              onClick={() => setShowClearConfirm(true)}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
-              aria-label="Clear conversation"
-              title="Clear conversation"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          <div className="flex items-center gap-3">
+            {/* Model Provider Dropdown */}
+            <div className="relative">
+              <label htmlFor="provider-select" className="sr-only">
+                Select AI Provider
+              </label>
+              <select
+                id="provider-select"
+                value={provider}
+                onChange={(e) => setProvider(e.target.value as 'gemini' | 'huggingface' | 'deepseek')}
+                disabled={isStreaming}
+                className="px-3 py-2 pr-8 text-sm border border-gray-300 rounded-lg bg-white text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed appearance-none cursor-pointer"
+                aria-label="Choose AI model provider"
+              >
+                <option value="gemini">Gemini</option>
+                <option value="huggingface">Hugging Face (MiniMax-M2)</option>
+                <option value="deepseek">DeepSeek-R1</option>
+              </select>
+              <svg 
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
-            </button>
-          )}
+            </div>
+            {messages.length > 0 && (
+              <button
+                onClick={() => setShowClearConfirm(true)}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
+                aria-label="Clear conversation"
+                title="Clear conversation"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            )}
+          </div>
         </header>
 
       {/* Clear Confirmation Modal */}
