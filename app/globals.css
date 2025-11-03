@@ -76,28 +76,49 @@ body {
   transition-timing-function: ease-in-out;
 }
 
-/* Scrollbar styling for light mode */
+/* Scrollbar styling - Professional auto-hide behavior */
+/* WebKit browsers (Chrome, Safari, Edge) */
 ::-webkit-scrollbar {
   width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f9fafb;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d1d5db;
+  background: transparent;
   border-radius: 3px;
+  transition: background 0.2s ease;
 }
 
-::-webkit-scrollbar-thumb:hover {
+/* Show scrollbar on container hover */
+*:hover::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+}
+
+*:hover::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
+}
+
+/* Firefox - thin auto-hide scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+*:hover {
+  scrollbar-color: #d1d5db #f9fafb;
 }
 
 /* Hide scrollbar on mobile */
 @media (max-width: 640px) {
   ::-webkit-scrollbar {
     width: 0px;
+  }
+  
+  * {
+    scrollbar-width: none;
   }
 }
 

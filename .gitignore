@@ -40,20 +40,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Documentation files (generated during development)
-LAYOUT_FIXES.md
-LAYOUT_DIAGRAM.md
-MINIMALIST_DESIGN.md
-BEFORE_AFTER.md
-CODE_RENDERING_GUIDE.md
-FINAL_UPDATES.md
-COMPLETED_UPDATES.md
-LIGHT_MODE_UPDATE.md
-CHANGELOG.md
-FEATURES.md
-FEATURE_GUIDE.md
-TEST_FEATURES.md
-GIT_GUIDE.md
+# Markdown files (ignore all except README.md)
+*.md
+!README.md
 
 # Plans directory
 /plans/

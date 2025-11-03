@@ -1,5 +1,5 @@
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
-import { HumanMessage, AIMessage } from '@langchain/core/messages';
+import { HumanMessage, AIMessage, SystemMessage } from '@langchain/core/messages';
 import { HfInference } from '@huggingface/inference';
 import { NextRequest } from 'next/server';
 
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
             const stream = hf.chatCompletionStream({
               model: modelId,
               messages: messages.map((msg: { role: string; content: string }) => ({
-                role: msg.role === 'user' ? 'user' : 'assistant',
+                role: msg.role === 'system' ? 'system' : (msg.role === 'user' ? 'user' : 'assistant'),
                 content: msg.content,
               })),
               max_tokens: 2048,
@@ -75,6 +75,8 @@ export async function POST(req: NextRequest) {
       const formattedMessages = messages.map((msg: { role: string; content: string }) => {
         if (msg.role === 'user') {
           return new HumanMessage(msg.content);
+        } else if (msg.role === 'system') {
+          return new SystemMessage(msg.content);
         } else {
           return new AIMessage(msg.content);
         }

@@ -5,9 +5,10 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import { CodeBlock } from './components/CodeBlock';
+import { ThinkingMessage } from './components/ThinkingMessage';
 
 interface Message {
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
 }
 
@@ -22,13 +23,80 @@ const SUGGESTED_PROMPTS = [
   "Write a haiku about coding",
 ];
 
+/**
+ * Versatile thinking detection:
+ * Instead of hardcoding which models support thinking,
+ * we detect thinking based on content (<think> tags).
+ * This makes the system flexible for any model that uses thinking tags.
+ */
+
+/**
+ * Versatile thinking tag parser
+ * Detects and extracts <think> content from any model response
+ * Handles complete tags, partial/streaming tags, and variations in format
+ * 
+ * @param content - Raw message content from the model
+ * @returns Object with thinking content, response content, and detection flag
+ */
+function parseThinkingContent(content: string): { thinking: string; response: string; hasThinkTag: boolean } {
+  // Case-insensitive detection to handle variations
+  const lowerContent = content.toLowerCase();
+  const hasOpenTag = lowerContent.includes('<think>');
+  const hasCloseTag = lowerContent.includes('</think>');
+  
+  if (!hasOpenTag) {
+    // No thinking tags present
+    return { thinking: '', response: content, hasThinkTag: false };
+  }
+  
+  // Try to match complete thinking block (with case-insensitive flag)
+  const completeThinkRegex = /<think>([\s\S]*?)<\/think>/i;
+  const completeMatch = content.match(completeThinkRegex);
+  
+  if (completeMatch) {
+    // Complete thinking block found
+    const thinking = completeMatch[1].trim();
+    const response = content.replace(completeThinkRegex, '').trim();
+    
+    return {
+      thinking,
+      response,
+      hasThinkTag: true,
+    };
+  }
+  
+  // Handle streaming/partial thinking tag
+  if (hasOpenTag && !hasCloseTag) {
+    const thinkStartIndex = lowerContent.indexOf('<think>');
+    const actualStartIndex = content.substring(0, thinkStartIndex + 7).lastIndexOf('<think>') || thinkStartIndex;
+    
+    // Extract content after <think> tag (still streaming)
+    const thinkingContent = content.substring(actualStartIndex + 7).trim();
+    
+    return {
+      thinking: thinkingContent,
+      response: '', // No response yet, still thinking
+      hasThinkTag: true,
+    };
+  }
+  
+  // Edge case: has both tags but regex didn't match (malformed)
+  // Treat as non-thinking content
+  return { thinking: '', response: content, hasThinkTag: false };
+}
+
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [provider, setProvider] = useState<'gemini' | 'huggingface' | 'deepseek'>('gemini');
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const [showSystemPrompt, setShowSystemPrompt] = useState(false);
+  const [systemMessage, setSystemMessage] = useState<string>('');
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const [announcement, setAnnouncement] = useState('');
@@ -36,6 +104,7 @@ export default function Home() {
   // Load conversation from localStorage on mount (client-side only)
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      setIsLoadingHistory(true);
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         try {
@@ -45,6 +114,8 @@ export default function Home() {
           console.error('Failed to load conversation:', e);
         }
       }
+      // Small delay to show the loading state
+      setTimeout(() => setIsLoadingHistory(false), 300);
     }
   }, []);
 
@@ -62,6 +133,31 @@ export default function Home() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Check if user is at bottom of the page
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!messagesContainerRef.current) return;
+      
+      const container = messagesContainerRef.current;
+      const scrollTop = container.scrollTop;
+      const scrollHeight = container.scrollHeight;
+      const clientHeight = container.clientHeight;
+      
+      // Show button if user scrolled up more than 100px from bottom
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+      setShowScrollButton(!isNearBottom && messages.length > 0);
+    };
+
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.addEventListener('scroll', handleScroll);
+      // Check initially
+      handleScroll();
+      
+      return () => container.removeEventListener('scroll', handleScroll);
+    }
+  }, [messages.length]);
 
   // Screen reader announcement for new messages
   const announce = (text: string) => {
@@ -109,8 +205,16 @@ export default function Home() {
     abortControllerRef.current = abortController;
 
     try {
-      // Send full conversation history for context
-      const conversationHistory = [...messages, userMessage];
+      // Prepare conversation history with system message if present
+      let conversationHistory = [...messages, userMessage];
+      
+      // Prepend system message if it exists and isn't already in history
+      if (systemMessage.trim() && !messages.some(m => m.role === 'system')) {
+        conversationHistory = [
+          { role: 'system', content: systemMessage.trim() },
+          ...conversationHistory
+        ];
+      }
       
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -211,9 +315,18 @@ export default function Home() {
       <div className="flex flex-col h-full max-w-4xl w-full mx-auto px-3 py-4 md:px-6 md:py-6">
         {/* Minimal Header */}
         <header className="flex items-center justify-between mb-6 md:mb-8 pb-4 border-b border-gray-200">
-          <h1 className="text-xl md:text-2xl font-semibold text-gray-900">
-            Chat
-          </h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-xl md:text-2xl font-semibold text-gray-900">
+              Chat
+            </h1>
+            <a
+              href="/embeding"
+              className="text-sm text-blue-600 hover:text-blue-700 hover:underline font-medium"
+              title="Document Similarity"
+            >
+              Embeddings
+            </a>
+          </div>
           <div className="flex items-center gap-3">
             {/* Model Provider Dropdown */}
             <div className="relative">
@@ -241,6 +354,19 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </div>
+            <button
+              onClick={() => setShowSystemPrompt(true)}
+              className={`p-2 rounded-lg transition-all ${
+                systemMessage ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+              }`}
+              aria-label="System prompt"
+              title="Set system prompt"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
             {messages.length > 0 && (
               <button
                 onClick={() => setShowClearConfirm(true)}
@@ -284,14 +410,68 @@ export default function Home() {
         </div>
       )}
 
+      {/* System Prompt Modal */}
+      {showSystemPrompt && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-5 max-w-lg w-full shadow-2xl" role="dialog" aria-labelledby="system-dialog-title">
+            <h2 id="system-dialog-title" className="text-lg font-semibold mb-2 text-gray-900">
+              System Prompt
+            </h2>
+            <p className="text-gray-600 text-sm mb-4">
+              Set instructions for how the AI should behave. This will be sent with every message.
+            </p>
+            <textarea
+              value={systemMessage}
+              onChange={(e) => setSystemMessage(e.target.value)}
+              placeholder="You are a helpful assistant that provides concise, accurate answers..."
+              className="w-full h-32 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-gray-900 placeholder-gray-400 text-sm"
+            />
+            <div className="flex gap-2 justify-end mt-4">
+              <button
+                onClick={() => setShowSystemPrompt(false)}
+                className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowSystemPrompt(false);
+                  if (systemMessage.trim()) {
+                    announce('System prompt set');
+                  }
+                }}
+                className="px-4 py-2 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Messages Container */}
       <main 
-        className="flex-1 overflow-y-auto mb-3 md:mb-4 space-y-3 md:space-y-4" 
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto mb-3 md:mb-4 space-y-3 md:space-y-4 relative pr-2 md:pr-3" 
         role="log" 
         aria-label="Chat messages"
         aria-live="polite"
       >
-        {messages.length === 0 && (
+        {/* Loading state when fetching history from localStorage */}
+        {isLoadingHistory && (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <div className="flex gap-2 justify-center mb-3">
+                <span className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                <span className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                <span className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+              </div>
+              <p className="text-sm text-gray-500">Loading conversation...</p>
+            </div>
+          </div>
+        )}
+
+        {!isLoadingHistory && messages.length === 0 && (
           <div className="flex items-center justify-center h-full px-4">
             <div className="w-full max-w-2xl">
               <div className="text-center mb-8">
@@ -320,7 +500,7 @@ export default function Home() {
           </div>
         )}
 
-        {messages.map((message, index) => (
+        {!isLoadingHistory && messages.map((message, index) => (
           <article
             key={index}
             className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`}
@@ -347,71 +527,84 @@ export default function Home() {
                   ? 'bg-blue-500 text-white'
                   : 'bg-gray-50 border border-gray-200'
               }`}>
-                <div className={`markdown-content leading-relaxed text-sm md:text-base ${
+                <div className={`${message.role === 'user' ? 'leading-normal' : 'markdown-content leading-relaxed'} text-sm md:text-base ${
                   message.role === 'user' ? 'text-white' : 'text-gray-900'
                 }`}>
                   {message.role === 'assistant' ? (
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      rehypePlugins={[rehypeHighlight]}
-                      components={{
-                        code({ node, inline, className, children, ...props }: any) {
-                          // Only use full CodeBlock component for:
-                          // 1. Block code (not inline)
-                          // 2. Code with language specification (className like "language-js")
-                          if (!inline && className) {
-                            return (
-                              <CodeBlock 
-                                className={className} 
-                                inline={false}
-                              >
-                                {children}
-                              </CodeBlock>
-                            );
-                          }
-                          
-                          // For inline code (in text, tables, etc), use simple inline style
-                          return (
-                            <code className="bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded text-[0.9em] font-mono">
-                              {children}
-                            </code>
-                          );
-                        }
-                      }}
-                    >
-                      {message.content}
-                    </ReactMarkdown>
+                    (() => {
+                      const isCurrentlyStreaming = isStreaming && index === messages.length - 1;
+                      
+                      // Show loading indicator if message is empty and streaming
+                      if (message.content === '' && isCurrentlyStreaming) {
+                        return (
+                          <div className="flex gap-1.5">
+                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} aria-hidden="true"></span>
+                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} aria-hidden="true"></span>
+                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} aria-hidden="true"></span>
+                          </div>
+                        );
+                      }
+                      
+                      const { thinking, response, hasThinkTag } = parseThinkingContent(message.content);
+                      
+                      // Versatile thinking detection: Show thinking UI if <think> tags are present
+                      // Works for any model, not just hardcoded ones
+                      if (hasThinkTag) {
+                        return (
+                          <ThinkingMessage 
+                            thinking={thinking} 
+                            response={response}
+                            isStreaming={isCurrentlyStreaming}
+                          />
+                        );
+                      }
+                      
+                      // Standard markdown rendering for non-thinking responses
+                      return (
+                        <>
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            rehypePlugins={[rehypeHighlight]}
+                            components={{
+                              code({ node, inline, className, children, ...props }: any) {
+                                if (!inline && className) {
+                                  return (
+                                    <CodeBlock 
+                                      className={className} 
+                                      inline={false}
+                                    >
+                                      {children}
+                                    </CodeBlock>
+                                  );
+                                }
+                                
+                                return (
+                                  <code className="bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded text-[0.9em] font-mono">
+                                    {children}
+                                  </code>
+                                );
+                              }
+                            }}
+                          >
+                            {message.content}
+                          </ReactMarkdown>
+                          {isCurrentlyStreaming && (
+                            <span 
+                              className="inline-block w-1.5 h-4 ml-1 bg-gray-400 animate-pulse"
+                              aria-label="Typing indicator"
+                            ></span>
+                          )}
+                        </>
+                      );
+                    })()
                   ) : (
-                    <p className="whitespace-pre-wrap">{message.content}</p>
-                  )}
-                  {message.role === 'assistant' && isStreaming && index === messages.length - 1 && (
-                    <span 
-                      className="inline-block w-1.5 h-4 ml-1 bg-gray-400 animate-pulse"
-                      aria-label="Typing indicator"
-                    ></span>
+                    <span className="whitespace-pre-wrap block">{message.content}</span>
                   )}
                 </div>
               </div>
             </div>
           </article>
         ))}
-
-        {isStreaming && messages[messages.length - 1]?.content === '' && (
-          <div className="flex justify-start" role="status" aria-label="Assistant is typing">
-            <div>
-              <div className="text-xs font-medium mb-1.5 text-left text-gray-600">
-                AI Assistant
-              </div>
-              <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
-                <div className="flex gap-1.5">
-                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} aria-hidden="true"></span>
-                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} aria-hidden="true"></span>
-                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} aria-hidden="true"></span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         <div ref={messagesEndRef} />
       </main>
@@ -469,6 +662,24 @@ export default function Home() {
           )}
         </div>
       </form>
+
+      {/* Scroll to Bottom Button - Fixed to viewport */}
+      {showScrollButton && (
+        <button
+          onClick={scrollToBottom}
+          className="fixed bottom-24 right-6 p-3 bg-white border border-gray-300 rounded-full shadow-lg hover:bg-gray-50 hover:shadow-xl transition-all z-50 group"
+          aria-label="Scroll to bottom"
+        >
+          <svg 
+            className="w-5 h-5 text-gray-600 group-hover:text-gray-900" 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+          </svg>
+        </button>
+      )}
       </div>
     </div>
   );
