@@ -267,6 +267,319 @@ Context-aware AI conversations:
 [AI correctly remembers: "Your name is Alice and you're learning React"]
 ```
 
+## API Documentation
+
+### Chat Endpoint
+
+**Endpoint**: `POST /api/chat`
+
+**Description**: Streams AI responses from Google Gemini with conversation context.
+
+**Request Body**:
+```typescript
+{
+  messages: Array<{
+    role: 'user' | 'assistant';
+    content: string;
+  }>
+}
+```
+
+**Example Request**:
+```bash
+curl -X POST http://localhost:3000/api/chat \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "messages": [
+      {"role": "user", "content": "Hello, how are you?"},
+      {"role": "assistant", "content": "I am doing well! How can I help you?"},
+      {"role": "user", "content": "What did I just ask you?"}
+    ]
+  }'
+```
+
+**Response**: Server-Sent Events (SSE) stream of tokens
+
+**Response Headers**:
+```
+Content-Type: text/event-stream
+Cache-Control: no-cache
+Connection: keep-alive
+```
+
+**Response Example**:
+```
+data: {"token":"Hello"}:status: done
+data: {"token":" there"}:status: done
+data: {"token":"!"}:status: done
+data: {"token":" You"}:status: done
+...
+data: [DONE]
+```
+
+**Error Responses**:
+- `400 Bad Request`: Invalid message format
+- `500 Internal Server Error`: API configuration or processing error
+
+### Error Handling
+
+The API handles various error scenarios:
+
+```typescript
+// Invalid request format
+{
+  "error": "Invalid request format. Messages array is required."
+}
+
+// API key missing
+{
+  "error": "GEMINI_API_KEY environment variable is required"
+}
+
+// Invalid messages structure
+{
+  "error": "Each message must have 'role' and 'content' properties"
+}
+```
+
+## Usage Examples
+
+### Basic Conversation
+```bash
+# Start a conversation
+curl -X POST http://localhost:3000/api/chat \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "messages": [
+      {"role": "user", "content": "Explain quantum computing in simple terms"}
+    ]
+  }'
+```
+
+### Multi-turn Conversation
+```bash
+# Continue the conversation with context
+curl -X POST http://localhost:3000/api/chat \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "messages": [
+      {"role": "user", "content": "Explain quantum computing in simple terms"},
+      {"role": "assistant", "content": "Quantum computing is like... [response]"},
+      {"role": "user", "content": "Can you give me a practical example?"}
+    ]
+  }'
+```
+
+### Code Generation Example
+```bash
+# Ask for code with context
+curl -X POST http://localhost:3000/api/chat \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "messages": [
+      {"role": "user", "content": "Write a Python function to calculate fibonacci numbers"},
+      {"role": "assistant", "content": "Here is a Python function to calculate fibonacci numbers:\n\n```python\ndef fibonacci(n):\n    if n <= 1:\n        return n\n    return fibonacci(n-1) + fibonacci(n-2)\n```\n\nWould you like me to optimize this?"},
+      {"role": "user", "content": "Yes, please optimize it"}
+    ]
+  }'
+```
+
+### Integration Examples
+
+#### JavaScript/TypeScript
+```typescript
+async function chatWithAI(messages: {role: string, content: string}[]) {
+  const response = await fetch('/api/chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ messages })
+  });
+
+  const reader = response.body?.getReader();
+  const decoder = new TextDecoder();
+  
+  while (true) {
+    const { done, value } = await reader!.read();
+    if (done) break;
+    
+    const chunk = decoder.decode(value);
+    const lines = chunk.split('\n');
+    
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        const data = line.slice(6);
+        if (data === '[DONE]') return;
+        
+        try {
+          const { token } = JSON.parse(data);
+          console.log(token);
+        } catch (e) {
+          // Handle parsing errors
+        }
+      }
+    }
+  }
+}
+```
+
+#### Python
+```python
+import requests
+import json
+
+def chat_with_ai(messages):
+    response = requests.post(
+        'http://localhost:3000/api/chat',
+        json={'messages': messages},
+        stream=True
+    )
+    
+    for line in response.iter_lines():
+        if line.startswith(b'data: '):
+            data = line[6:].decode('utf-8')
+            if data == '[DONE]':
+                break
+            try:
+                token_data = json.loads(data)
+                print(token_data['token'], end='', flush=True)
+            except json.JSONDecodeError:
+                continue
+```
+
+## Troubleshooting
+
+### Common Issues
+
+#### 1. API Key Issues
+**Problem**: `GEMINI_API_KEY environment variable is required`
+**Solution**:
+- Create a `.env.local` file in the project root
+- Add your API key: `GEMINI_API_KEY=your_api_key_here`
+- Restart the development server
+
+#### 2. Build Errors
+**Problem**: TypeScript compilation errors
+**Solution**:
+```bash
+# Clear Next.js cache
+rm -rf .next
+npm run dev
+
+# Or reinstall dependencies
+rm -rf node_modules package-lock.json
+npm install
+npm run dev
+```
+
+#### 3. Streaming Issues
+**Problem**: Responses don't stream, appear all at once
+**Solution**:
+- Check browser compatibility (requires modern browser)
+- Verify Server-Sent Events support
+- Check network connectivity
+- Try with curl to isolate browser issues
+
+#### 4. CORS Errors
+**Problem**: Cross-origin request blocked
+**Solution**:
+- Ensure you're making requests to the same origin
+- Check browser developer console for specific CORS errors
+- For external integrations, configure CORS properly
+
+#### 5. Memory/Performance
+**Problem**: Long conversations become slow
+**Solution**:
+- Conversations are stored in localStorage
+- Clear old conversations periodically
+- Consider implementing conversation limits for production
+
+### Development Issues
+
+#### Hot Reload Not Working
+```bash
+# Reset Next.js development environment
+npx next clean
+npm run dev
+```
+
+#### Environment Variables Not Loading
+- Ensure `.env.local` is in the project root
+- Restart the development server after changes
+- Check variable names match exactly (case-sensitive)
+
+#### Dependencies Issues
+```bash
+# Clear npm cache
+npm cache clean --force
+rm -rf node_modules
+npm install
+```
+
+## Development
+
+### Project Setup
+```bash
+# Clone and setup
+git clone <repository-url>
+cd gemini-chatbot
+npm install
+
+# Environment setup
+cp .env.example .env.local
+# Edit .env.local with your API key
+
+# Start development
+npm run dev
+```
+
+### Available Scripts
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+- `npm run type-check` - Run TypeScript type checking
+
+### Code Structure
+```
+app/
+├── api/chat/
+│   └── route.ts          # API endpoint for chat
+├── components/
+│   └── CodeBlock.tsx     # Code display component
+├── globals.css           # Global styles
+├── layout.tsx            # App layout
+└── page.tsx              # Main chat interface
+```
+
+### Contributing
+
+We welcome contributions! Please follow these steps:
+
+1. **Fork the repository**
+2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
+3. **Make your changes** with proper documentation
+4. **Test thoroughly** across different browsers
+5. **Run linting**: `npm run lint`
+6. **Commit changes**: `git commit -m 'Add amazing feature'`
+7. **Push to branch**: `git push origin feature/amazing-feature`
+8. **Open a Pull Request**
+
+#### Code Style
+- Use TypeScript for all new code
+- Follow existing ESLint configuration
+- Add JSDoc comments for functions
+- Use semantic commit messages
+- Test accessibility with keyboard navigation
+
+#### Accessibility Requirements
+- All interactive elements must have ARIA labels
+- Support keyboard navigation
+- Maintain 4.5:1 contrast ratio
+- Test with screen readers
+- Use semantic HTML elements
+
 ## Future Enhancements
 
 ✅ = Implemented | 🔜 = Planned
@@ -282,6 +595,10 @@ Context-aware AI conversations:
 - 🔜 Image upload support (Gemini Vision)
 - 🔜 Auto-resize textarea for long prompts
 - 🔜 Keyboard shortcuts (Ctrl+K to clear, etc.)
+- 🔜 Multi-language support
+- 🔜 Plugin system for custom AI models
+- 🔜 Real-time collaboration features
+- 🔜 Advanced conversation search
 
 ## License
 
