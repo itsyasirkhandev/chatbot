@@ -9,6 +9,8 @@ A beautiful AI-powered chatbot built with Next.js, LangChain, and Google Gemini 
 - 🤖 **Google Gemini 2.0 Flash** - Powered by Google's latest fast AI model
 - 📱 **Responsive Design** - Works beautifully on desktop and mobile
 - 🎨 **Modern Typography** - Bricolage Grotesque headings + Inter body text
+- 📝 **Markdown Support** - Beautiful formatting with code syntax highlighting
+- ♿ **Accessibility First** - WCAG compliant with screen reader support, keyboard navigation, and ARIA labels
 
 ## Tech Stack
 
@@ -16,6 +18,7 @@ A beautiful AI-powered chatbot built with Next.js, LangChain, and Google Gemini 
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS with custom glassmorphism utilities
 - **AI**: LangChain + Google Gemini 2.0 Flash
+- **Markdown**: react-markdown with GitHub Flavored Markdown & syntax highlighting
 - **Deployment**: Vercel (zero-config)
 
 ## Getting Started
@@ -129,12 +132,45 @@ When prompted, add the `GEMINI_API_KEY` environment variable.
 |----------|-------------|----------|
 | `GEMINI_API_KEY` | Google Gemini API key | Yes |
 
+## Accessibility Features
+
+This chatbot is built with accessibility as a priority:
+
+- **Semantic HTML**: Proper use of `<header>`, `<main>`, `<article>`, and other semantic elements
+- **ARIA Labels**: All interactive elements have descriptive labels for screen readers
+- **Keyboard Navigation**: Full keyboard support with visible focus indicators
+- **Screen Reader Support**: Live region announcements for message status updates
+- **Skip Links**: Keyboard users can skip directly to the chat input
+- **High Contrast**: Enhanced border visibility (2px borders) for better contrast
+- **Focus Management**: Automatic focus return to input after message submission
+- **Status Indicators**: Clear loading states with ARIA announcements
+
+**Keyboard Shortcuts:**
+- `Tab` / `Shift+Tab` - Navigate between elements
+- `Enter` - Submit message
+- `Skip to chat input` link appears when navigating with keyboard
+
 ## Browser Support
 
 - ✅ Chrome/Edge (full backdrop blur support)
 - ✅ Firefox (full backdrop blur support)
 - ✅ Safari (full backdrop blur support)
 - ⚠️ Older browsers fallback to solid glass colors
+
+## Markdown Support
+
+The chatbot supports rich formatting in responses:
+
+- **Code blocks** with syntax highlighting (Python, JavaScript, etc.)
+- **Headings** (H1-H4) with proper hierarchy
+- **Lists** (ordered and unordered)
+- **Tables** with glassmorphic styling
+- **Blockquotes** with accent border
+- **Links** with hover effects
+- **Inline code** with subtle background
+- **Bold** and *italic* text
+
+Try asking: "Show me a Python hello world example" or "Create a markdown table"
 
 ## Future Enhancements
 
@@ -143,9 +179,9 @@ When prompted, add the `GEMINI_API_KEY` environment variable.
 - [ ] Message regeneration and editing
 - [ ] Export conversation as text/JSON
 - [ ] Dark/light theme toggle
-- [ ] Markdown rendering in responses
-- [ ] Code syntax highlighting
 - [ ] Voice input/output
+- [ ] Image upload support
+- [ ] Copy code blocks button
 
 ## License
 
