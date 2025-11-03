@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { ReactNode } from 'react';
 
 interface CodeBlockProps {
-  children: string;
+  children: ReactNode;
   className?: string;
   inline?: boolean;
 }
@@ -11,9 +12,31 @@ interface CodeBlockProps {
 export function CodeBlock({ children, className, inline }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
 
+  // Recursively extract text from React elements (handles syntax highlighting)
+  const extractTextContent = (node: ReactNode): string => {
+    if (typeof node === 'string') {
+      return node;
+    }
+    if (typeof node === 'number') {
+      return String(node);
+    }
+    if (Array.isArray(node)) {
+      return node.map(extractTextContent).join('');
+    }
+    if (node && typeof node === 'object' && 'props' in node) {
+      const element = node as any;
+      if (element.props && element.props.children) {
+        return extractTextContent(element.props.children);
+      }
+    }
+    return '';
+  };
+
+  const codeString = extractTextContent(children);
+
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(children);
+      await navigator.clipboard.writeText(codeString);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -24,7 +47,7 @@ export function CodeBlock({ children, className, inline }: CodeBlockProps) {
   // For inline code, return simple element
   if (inline) {
     return (
-      <code className="bg-white/10 px-2 py-0.5 rounded text-sm font-mono text-slate-200 border border-white/10">
+      <code className="bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded text-[0.9em] font-mono">
         {children}
       </code>
     );
@@ -35,39 +58,39 @@ export function CodeBlock({ children, className, inline }: CodeBlockProps) {
   const language = match ? match[1] : 'text';
 
   return (
-    <div className="relative group my-4 not-prose">
-      <div className="bg-[#0d1117] rounded-xl border border-white/10 overflow-hidden">
+    <div className="relative group my-3 not-prose">
+      <div className="bg-[#1e1e1e] rounded-lg border border-gray-300 overflow-hidden shadow-sm">
         {/* Header with language and copy button */}
-        <div className="flex items-center justify-between px-4 py-2 bg-white/5 border-b border-white/10">
-          <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
+        <div className="flex items-center justify-between px-3 py-1.5 bg-[#2d2d2d] border-b border-gray-600">
+          <span className="text-xs text-gray-300 font-medium">
             {language}
           </span>
           <button
             onClick={handleCopy}
-            className="px-2 py-1 text-xs font-medium bg-white/5 hover:bg-white/10 text-slate-300 rounded transition-all flex items-center gap-1.5"
+            className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white rounded transition-all"
             aria-label={copied ? 'Copied!' : 'Copy code'}
             type="button"
           >
             {copied ? (
-              <>
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <span className="flex items-center gap-1">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                <span>Copied!</span>
-              </>
+                Copied
+              </span>
             ) : (
-              <>
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+              <span className="flex items-center gap-1">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
-                <span>Copy</span>
-              </>
+                Copy
+              </span>
             )}
           </button>
         </div>
-        {/* Code content */}
-        <div className="overflow-x-auto">
-          <pre className="p-4 m-0 text-sm leading-relaxed">
+        {/* Code content - render children as-is to preserve syntax highlighting */}
+        <div className="overflow-x-auto bg-[#1e1e1e]">
+          <pre className="p-3 m-0 text-xs md:text-sm leading-relaxed bg-[#1e1e1e]">
             <code className={className}>{children}</code>
           </pre>
         </div>
