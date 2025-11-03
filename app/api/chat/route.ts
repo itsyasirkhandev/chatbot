@@ -1,14 +1,15 @@
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
+import { HumanMessage, AIMessage } from '@langchain/core/messages';
 import { NextRequest } from 'next/server';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
   try {
-    const { message } = await req.json();
+    const { messages } = await req.json();
 
-    if (!message) {
-      return new Response('Message is required', { status: 400 });
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return new Response('Messages array is required', { status: 400 });
     }
 
     const model = new ChatGoogleGenerativeAI({
@@ -17,7 +18,16 @@ export async function POST(req: NextRequest) {
       streaming: true,
     });
 
-    const stream = await model.stream(message);
+    // Convert messages to LangChain message format
+    const formattedMessages = messages.map((msg: { role: string; content: string }) => {
+      if (msg.role === 'user') {
+        return new HumanMessage(msg.content);
+      } else {
+        return new AIMessage(msg.content);
+      }
+    });
+
+    const stream = await model.stream(formattedMessages);
 
     // Convert LangChain stream to ReadableStream for SSE
     const encoder = new TextEncoder();

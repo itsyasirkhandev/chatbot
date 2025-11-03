@@ -48,10 +48,13 @@ export default function Home() {
     setMessages((prev) => [...prev, { role: 'assistant', content: '' }]);
 
     try {
+      // Send full conversation history for context
+      const conversationHistory = [...messages, userMessage];
+      
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userInput }),
+        body: JSON.stringify({ messages: conversationHistory }),
       });
 
       if (!response.ok) {
