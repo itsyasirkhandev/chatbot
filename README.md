@@ -7,7 +7,7 @@ A beautiful AI-powered chatbot built with Next.js, LangChain, and Google Gemini 
 ### Core Features
 - ✨ **Clean Minimal Design** - Beautiful light theme with gray backgrounds and solid styling
 - 🚀 **Streaming Responses** - Real-time token streaming for instant feedback
-- 🤖 **Google Gemini 2.0 Flash** - Powered by Google's latest fast AI model
+- 🤖 **Google Gemini 2.5 Flash** - Powered by Google's latest fast AI model
 - 📱 **Responsive Design** - Works beautifully on desktop and mobile
 - 🎨 **Modern Typography** - Bricolage Grotesque headings + Inter body text
 
