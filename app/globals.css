@@ -135,21 +135,16 @@ body {
 }
 
 .markdown-content code {
-  background: rgba(255, 255, 255, 0.08);
-  padding: 0.2em 0.5em;
-  border-radius: 6px;
-  font-size: 0.9em;
   font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #e2e8f0;
 }
+
+/* Inline code styling is handled by CodeBlock component */
 
 .markdown-content pre {
   background: transparent !important;
   border: none !important;
   border-radius: 0 !important;
   padding: 0 !important;
-  overflow-x: visible !important;
   margin: 0 !important;
 }
 
@@ -157,11 +152,14 @@ body {
   background: transparent !important;
   padding: 0 !important;
   border: none !important;
-  border-radius: 0 !important;
   color: #e2e8f0 !important;
   display: block;
-  line-height: 1.6;
-  font-size: 0.875rem;
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+}
+
+/* Prevent prose styles from interfering */
+.not-prose {
+  all: revert;
 }
 
 .markdown-content blockquote {

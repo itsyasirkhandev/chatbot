@@ -32,22 +32,24 @@ export default function Home() {
   const abortControllerRef = useRef<AbortController | null>(null);
   const [announcement, setAnnouncement] = useState('');
 
-  // Load conversation from localStorage on mount
+  // Load conversation from localStorage on mount (client-side only)
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setMessages(parsed);
-      } catch (e) {
-        console.error('Failed to load conversation:', e);
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          setMessages(parsed);
+        } catch (e) {
+          console.error('Failed to load conversation:', e);
+        }
       }
     }
   }, []);
 
-  // Save conversation to localStorage whenever messages change
+  // Save conversation to localStorage whenever messages change (client-side only)
   useEffect(() => {
-    if (messages.length > 0) {
+    if (typeof window !== 'undefined' && messages.length > 0) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
     }
   }, [messages]);
@@ -69,7 +71,9 @@ export default function Home() {
   // Clear conversation
   const handleClearConversation = () => {
     setMessages([]);
-    localStorage.removeItem(STORAGE_KEY);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(STORAGE_KEY);
+    }
     setShowClearConfirm(false);
     announce('Conversation cleared');
     inputRef.current?.focus();
@@ -328,15 +332,14 @@ export default function Home() {
                         remarkPlugins={[remarkGfm]}
                         rehypePlugins={[rehypeHighlight]}
                         components={{
-                          code({ node, inline, className, children, ...props }) {
+                          code({ node, inline, className, children, ...props }: any) {
                             const codeString = String(children).replace(/\n$/, '');
                             
-                            if (inline) {
-                              return <code className={className} {...props}>{children}</code>;
-                            }
-                            
                             return (
-                              <CodeBlock className={className}>
+                              <CodeBlock 
+                                className={className} 
+                                inline={inline}
+                              >
                                 {codeString}
                               </CodeBlock>
                             );
