@@ -1,5 +1,5 @@
 import { FormEvent, forwardRef } from 'react';
-import { FiSend, FiSquare } from 'react-icons/fi';
+import { FiSend, FiSquare, FiArrowDown } from 'react-icons/fi';
 
 interface ChatInputProps {
   value: string;
@@ -7,10 +7,12 @@ interface ChatInputProps {
   onSubmit: (e: FormEvent) => void;
   onStop: () => void;
   isStreaming: boolean;
+  showScrollButton?: boolean;
+  onScrollToBottom?: () => void;
 }
 
 export const ChatInput = forwardRef<HTMLInputElement, ChatInputProps>(
-  ({ value, onChange, onSubmit, onStop, isStreaming }, ref) => {
+  ({ value, onChange, onSubmit, onStop, isStreaming, showScrollButton, onScrollToBottom }, ref) => {
     return (
       <form
         onSubmit={onSubmit}
@@ -37,6 +39,19 @@ export const ChatInput = forwardRef<HTMLInputElement, ChatInputProps>(
           <span id="input-hint" className="sr-only">
             Press Enter to send message
           </span>
+
+          {showScrollButton && (
+            <button
+              type="button"
+              onClick={onScrollToBottom}
+              aria-label="Scroll to latest message"
+              className="absolute right-12 top-1/2 -translate-y-1/2 p-2 bg-card border border-border rounded-md hover:border-primary/40 hover:bg-card/90 text-muted-foreground hover:text-primary transition-all duration-200 shadow-sm"
+              title="Scroll to bottom"
+            >
+              <FiArrowDown className="w-4 h-4" />
+            </button>
+          )}
+
           {isStreaming ? (
             <button
               type="button"
@@ -59,7 +74,7 @@ export const ChatInput = forwardRef<HTMLInputElement, ChatInputProps>(
             </button>
           )}
         </div>
-      </form
+      </form>
     );
   }
 );

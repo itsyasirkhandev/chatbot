@@ -13,6 +13,7 @@ interface HeaderProps {
   onToggleSidebar: () => void;
   isDarkMode: boolean;
   onToggleDarkMode: () => void;
+  isProviderLocked?: boolean;
 }
 
 export function Header({
@@ -26,6 +27,7 @@ export function Header({
   onToggleSidebar,
   isDarkMode,
   onToggleDarkMode,
+  isProviderLocked,
 }: HeaderProps) {
   return (
     <header className="mb-6 md:mb-8">
@@ -74,10 +76,10 @@ export function Header({
               id="provider-select"
               value={provider}
               onChange={(e) => onProviderChange(e.target.value as 'gemini' | 'huggingface' | 'deepseek')}
-              disabled={isStreaming || messagesCount > 0}
+              disabled={isStreaming || messagesCount > 0 || !!isProviderLocked}
               className="px-3 py-2 pr-8 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed appearance-none cursor-pointer transition-all"
               aria-label="Choose AI model provider"
-              title={isStreaming || messagesCount > 0 ? 'Model is locked for this conversation' : 'Choose AI model provider'}
+              title={isStreaming || messagesCount > 0 || isProviderLocked ? 'Model is locked for this conversation' : 'Choose AI model provider'}
             >
               <option value="gemini">Gemini</option>
               <option value="huggingface">Hugging Face</option>

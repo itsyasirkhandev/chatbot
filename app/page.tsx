@@ -17,6 +17,7 @@ export default function Home() {
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [provider, setProvider] = useState<Provider>('gemini');
+  const [providerLocked, setProviderLocked] = useState(false);
   const [systemMessage, setSystemMessage] = useState('');
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showSystemPrompt, setShowSystemPrompt] = useState(false);
@@ -63,6 +64,7 @@ export default function Home() {
 
   const handleNewChat = () => {
     createNewChat();
+    setProviderLocked(false);
     if (typeof window !== 'undefined' && window.innerWidth < 1024) {
       setIsSidebarOpen(false);
     }
@@ -73,6 +75,10 @@ export default function Home() {
   const handleSelectConversation = (id: string) => {
     selectConversation(id);
     const conv = conversations.find((c) => c.id === id);
+    // Lock provider if this conversation already has messages; unlock if empty
+    if (conv) {
+      setProviderLocked(conv.messages.length > 0);
+    }
     if (typeof window !== 'undefined' && window.innerWidth < 1024) {
       setIsSidebarOpen(false);
     }
@@ -248,8 +254,11 @@ export default function Home() {
           <Header
             provider={provider}
             onProviderChange={(p) => {
-              // Lock model selection once a conversation has started
-              if (messages.length === 0) setProvider(p);
+              // Lock model selection immediately upon first selection for this chat
+              if (messages.length === 0 && !providerLocked) {
+                setProvider(p);
+                setProviderLocked(true);
+              }
             }}
             systemMessage={systemMessage}
             onSystemPromptClick={() => setShowSystemPrompt(true)}
@@ -259,6 +268,7 @@ export default function Home() {
             onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
             isDarkMode={isDarkMode}
             onToggleDarkMode={handleToggleDarkMode}
+            isProviderLocked={providerLocked}
           />
 
           {/* Modals */}
@@ -301,25 +311,9 @@ export default function Home() {
             onSubmit={handleSubmit}
             onStop={handleStopGeneration}
             isStreaming={isStreaming}
+            showScrollButton={showScrollButton}
+            onScrollToBottom={scrollToBottom}
           />
-
-          {/* Scroll to Bottom Button */}
-          {showScrollButton && (
-            <button
-              onClick={scrollToBottom}
-              className="fixed bottom-24 right-6 p-3 bg-card border border-border rounded-full shadow-lg hover:shadow-xl hover:border-primary/40 hover:bg-card/90 transition-all duration-200 z-50 group"
-              aria-label="Scroll to bottom"
-            >
-              <svg
-                className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-              </svg>
-            </button>
-          )}
         </div>
       </div>
     </div>
