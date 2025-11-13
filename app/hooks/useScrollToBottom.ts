@@ -6,7 +6,12 @@ export function useScrollToBottom<T = HTMLDivElement>(deps: any[] = []) {
   const [showScrollButton, setShowScrollButton] = useState(false);
 
   const scrollToBottom = () => {
-    (endRef.current as any)?.scrollIntoView({ behavior: 'smooth' });
+    const container = containerRef.current as any;
+    if (container) {
+      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+    } else {
+      (endRef.current as any)?.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   // Auto-scroll on dependency changes
