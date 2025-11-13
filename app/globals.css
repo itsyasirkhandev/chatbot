@@ -123,6 +123,8 @@ body {
   background: hsl(var(--background));
   color: hsl(var(--foreground));
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Screen reader only utility */
@@ -165,7 +167,18 @@ body {
 @keyframes fade-in {
   from {
     opacity: 0;
-    transform: translateY(4px);
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -174,7 +187,11 @@ body {
 }
 
 .animate-fade-in {
-  animation: fade-in 0.2s ease-out;
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-slide-in-up {
+  animation: slide-in-up 0.3s ease-out;
 }
 
 /* Smooth transitions */
@@ -245,41 +262,50 @@ body {
 .markdown-content h2,
 .markdown-content h3,
 .markdown-content h4 {
-  font-weight: 600;
-  margin-top: 1.25em;
-  margin-bottom: 0.5em;
-  line-height: 1.3;
-  color: #111827;
+  font-weight: 700;
+  margin-top: 1.5em;
+  margin-bottom: 0.75em;
+  line-height: 1.2;
+  color: hsl(var(--foreground));
+  letter-spacing: -0.5px;
 }
 
 .markdown-content h1 {
-  font-size: 1.5em;
-  border-bottom: 2px solid #e5e7eb;
-  padding-bottom: 0.25em;
+  font-size: 1.875em;
+  border-bottom: 1px solid hsl(var(--border));
+  padding-bottom: 0.5em;
 }
 
 .markdown-content h2 {
-  font-size: 1.35em;
+  font-size: 1.5em;
+  border-bottom: 1px solid hsl(var(--border));
+  padding-bottom: 0.3em;
 }
 
 .markdown-content h3 {
-  font-size: 1.2em;
+  font-size: 1.25em;
+}
+
+.markdown-content h4 {
+  font-size: 1.1em;
 }
 
 .markdown-content p {
-  margin-bottom: 0.75em;
+  margin-bottom: 1em;
   color: inherit;
+  line-height: 1.7;
 }
 
 .markdown-content ul,
 .markdown-content ol {
-  margin-left: 1.25em;
-  margin-bottom: 0.75em;
+  margin-left: 1.5em;
+  margin-bottom: 1em;
 }
 
 .markdown-content li {
-  margin-bottom: 0.25em;
+  margin-bottom: 0.5em;
   color: inherit;
+  line-height: 1.6;
 }
 
 .markdown-content code {
@@ -312,50 +338,60 @@ body {
 }
 
 .markdown-content blockquote {
-  border-left: 4px solid #3b82f6;
-  padding-left: 1em;
-  margin: 1em 0;
+  border-left: 4px solid hsl(var(--primary));
+  padding-left: 1.25em;
+  padding-right: 1em;
+  margin: 1.5em 0;
   font-style: italic;
-  color: #4b5563;
-  background: transparent !important;
+  color: hsl(var(--muted-foreground));
+  background: hsl(var(--primary) / 0.05) !important;
+  border-radius: 0 0.375em 0.375em 0;
 }
 
 .markdown-content a {
-  color: #2563eb;
-  text-decoration: underline;
-  transition: all 0.2s;
+  color: hsl(var(--primary));
+  text-decoration: none;
+  font-weight: 500;
+  border-bottom: 1.5px solid hsl(var(--primary) / 0.3);
+  transition: all 0.2s ease;
 }
 
 .markdown-content a:hover {
-  color: #1d4ed8;
+  color: hsl(var(--primary) / 0.8);
+  border-bottom-color: hsl(var(--primary));
 }
 
 .markdown-content table {
   width: 100%;
   border-collapse: collapse;
-  margin: 1em 0;
+  margin: 1.5em 0;
   background: transparent !important;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5em;
+  overflow: hidden;
 }
 
 .markdown-content th,
 .markdown-content td {
-  border: 1px solid #e5e7eb;
-  padding: 0.5em;
+  border: 1px solid hsl(var(--border));
+  padding: 0.75em 1em;
   text-align: left;
   background: transparent !important;
   color: inherit;
 }
 
 .markdown-content th {
-  background: #f9fafb !important;
+  background: hsl(var(--muted) / 0.5) !important;
   font-weight: 600;
-  color: #111827;
+  color: hsl(var(--foreground));
+  font-size: 0.95em;
 }
 
 .markdown-content hr {
   border: none;
-  border-top: 1px solid #e5e7eb;
-  margin: 2em 0;
+  border-top: 2px solid hsl(var(--border));
+  margin: 2.5em 0;
+  opacity: 0.5;
 }
 
 /* Syntax highlighting for code blocks - VS Code Dark Theme */

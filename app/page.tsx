@@ -293,161 +293,179 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-screen bg-gradient-to-br from-background via-card to-background">
       {/* Screen reader announcements */}
-      <div 
-        role="status" 
-        aria-live="polite" 
-        aria-atomic="true" 
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
         className="sr-only"
       >
         {announcement}
       </div>
 
       {/* Skip to main content link for keyboard users */}
-      <a 
-        href="#chat-input" 
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-blue-500 focus:text-white focus:rounded-lg"
+      <a
+        href="#chat-input"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg"
       >
         Skip to chat input
       </a>
 
       <div className="flex flex-col h-full max-w-4xl w-full mx-auto px-3 py-4 md:px-6 md:py-6">
-        {/* Minimal Header */}
-        <header className="flex items-center justify-between mb-6 md:mb-8 pb-4 border-b border-gray-200">
-          <div className="flex items-center gap-4">
-            <h1 className="text-xl md:text-2xl font-semibold text-gray-900">
-              Chat
-            </h1>
-            <a
-              href="/embeding"
-              className="text-sm text-blue-600 hover:text-blue-700 hover:underline font-medium"
-              title="Document Similarity"
-            >
-              Embeddings
-            </a>
-          </div>
-          <div className="flex items-center gap-3">
-            {/* Model Provider Dropdown */}
-            <div className="relative">
-              <label htmlFor="provider-select" className="sr-only">
-                Select AI Provider
-              </label>
-              <select
-                id="provider-select"
-                value={provider}
-                onChange={(e) => setProvider(e.target.value as 'gemini' | 'huggingface' | 'deepseek')}
-                disabled={isStreaming}
-                className="px-3 py-2 pr-8 text-sm border border-gray-300 rounded-lg bg-white text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed appearance-none cursor-pointer"
-                aria-label="Choose AI model provider"
-              >
-                <option value="gemini">Gemini</option>
-                <option value="huggingface">Hugging Face (MiniMax-M2)</option>
-                <option value="deepseek">DeepSeek-R1</option>
-              </select>
-              <svg 
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" 
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
+        {/* Modern Header */}
+        <header className="mb-8 md:mb-10">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-6">
+            <div className="flex items-end gap-3">
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg">
+                <svg className="w-6 h-6 md:w-7 md:h-7 text-primary-foreground" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M20 2H4c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12h-4v4h-4v-4H6v-2h4V8h4v4h4v2z" />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+                  AI Chat
+                </h1>
+                <p className="text-xs md:text-sm text-muted-foreground font-medium">Powered by advanced AI</p>
+              </div>
             </div>
-            <button
-              onClick={() => setShowSystemPrompt(true)}
-              className={`p-2 rounded-lg transition-all ${
-                systemMessage ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-              }`}
-              aria-label="System prompt"
-              title="Set system prompt"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </button>
-            {messages.length > 0 && (
+            <div className="flex items-center gap-2">
+              {/* Model Provider Dropdown */}
+              <div className="relative">
+                <label htmlFor="provider-select" className="sr-only">
+                  Select AI Provider
+                </label>
+                <select
+                  id="provider-select"
+                  value={provider}
+                  onChange={(e) => setProvider(e.target.value as 'gemini' | 'huggingface' | 'deepseek')}
+                  disabled={isStreaming}
+                  className="px-3 py-2 pr-8 text-sm border border-border rounded-lg bg-card text-foreground hover:border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed appearance-none cursor-pointer transition-all"
+                  aria-label="Choose AI model provider"
+                >
+                  <option value="gemini">Gemini</option>
+                  <option value="huggingface">Hugging Face</option>
+                  <option value="deepseek">DeepSeek-R1</option>
+                </select>
+                <svg
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+
+              {/* System Prompt Button */}
               <button
-                onClick={() => setShowClearConfirm(true)}
-                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
-                aria-label="Clear conversation"
-                title="Clear conversation"
+                onClick={() => setShowSystemPrompt(true)}
+                className={`p-2.5 rounded-lg transition-all duration-200 ${
+                  systemMessage
+                    ? 'text-primary bg-primary/10 hover:bg-primary/20 shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                }`}
+                aria-label="System prompt"
+                title="Set system prompt"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </button>
-            )}
+
+              {/* Clear Button */}
+              {messages.length > 0 && (
+                <button
+                  onClick={() => setShowClearConfirm(true)}
+                  className="p-2.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all duration-200"
+                  aria-label="Clear conversation"
+                  title="Clear conversation"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              )}
+
+              {/* Embeddings Link */}
+              <a
+                href="/embeding"
+                className="px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all duration-200"
+                title="Document Similarity"
+              >
+                Embeddings
+              </a>
+            </div>
           </div>
         </header>
 
-      {/* Clear Confirmation Modal */}
-      {showClearConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-5 max-w-sm w-full shadow-2xl" role="dialog" aria-labelledby="clear-dialog-title">
-            <h2 id="clear-dialog-title" className="text-lg font-semibold mb-2 text-gray-900">
-              Clear conversation?
-            </h2>
-            <p className="text-gray-600 text-sm mb-5">
-              This will delete all messages. This action cannot be undone.
-            </p>
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => setShowClearConfirm(false)}
-                className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleClearConversation}
-                className="px-4 py-2 text-sm bg-red-500 hover:bg-red-600 text-white rounded-lg transition-all"
-              >
-                Clear
-              </button>
+        {/* Clear Confirmation Modal */}
+        {showClearConfirm && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-card rounded-xl p-6 max-w-sm w-full shadow-xl border border-border" role="dialog" aria-labelledby="clear-dialog-title">
+              <h2 id="clear-dialog-title" className="text-lg font-semibold mb-2 text-foreground">
+                Clear conversation?
+              </h2>
+              <p className="text-muted-foreground text-sm mb-6">
+                This will permanently delete all messages. This action cannot be undone.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowClearConfirm(false)}
+                  className="px-4 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-lg transition-all duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleClearConversation}
+                  className="px-4 py-2 text-sm font-medium bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-lg transition-all duration-200 shadow-sm"
+                >
+                  Clear
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* System Prompt Modal */}
-      {showSystemPrompt && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-5 max-w-lg w-full shadow-2xl" role="dialog" aria-labelledby="system-dialog-title">
-            <h2 id="system-dialog-title" className="text-lg font-semibold mb-2 text-gray-900">
-              System Prompt
-            </h2>
-            <p className="text-gray-600 text-sm mb-4">
-              Set instructions for how the AI should behave. This will be sent with every message.
-            </p>
-            <textarea
-              value={systemMessage}
-              onChange={(e) => setSystemMessage(e.target.value)}
-              placeholder="You are a helpful assistant that provides concise, accurate answers..."
-              className="w-full h-32 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-gray-900 placeholder-gray-400 text-sm"
-            />
-            <div className="flex gap-2 justify-end mt-4">
-              <button
-                onClick={() => setShowSystemPrompt(false)}
-                className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  setShowSystemPrompt(false);
-                  if (systemMessage.trim()) {
-                    announce('System prompt set');
-                  }
-                }}
-                className="px-4 py-2 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all"
-              >
-                Save
-              </button>
+        {/* System Prompt Modal */}
+        {showSystemPrompt && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-card rounded-xl p-6 max-w-lg w-full shadow-xl border border-border" role="dialog" aria-labelledby="system-dialog-title">
+              <h2 id="system-dialog-title" className="text-lg font-semibold mb-2 text-foreground">
+                System Prompt
+              </h2>
+              <p className="text-muted-foreground text-sm mb-4">
+                Set custom instructions for how the AI should behave. This will be sent with every message.
+              </p>
+              <textarea
+                value={systemMessage}
+                onChange={(e) => setSystemMessage(e.target.value)}
+                placeholder="You are a helpful assistant that provides concise, accurate answers..."
+                className="w-full h-32 px-4 py-3 border border-border bg-background rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none text-foreground placeholder-muted-foreground text-sm transition-all duration-200"
+              />
+              <div className="flex gap-3 justify-end mt-6">
+                <button
+                  onClick={() => setShowSystemPrompt(false)}
+                  className="px-4 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-lg transition-all duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowSystemPrompt(false);
+                    if (systemMessage.trim()) {
+                      announce('System prompt set');
+                    }
+                  }}
+                  className="px-4 py-2 text-sm font-medium bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-all duration-200 shadow-sm"
+                >
+                  Save
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Messages Container */}
       <main 
@@ -474,25 +492,34 @@ export default function Home() {
         {!isLoadingHistory && messages.length === 0 && (
           <div className="flex items-center justify-center h-full px-4">
             <div className="w-full max-w-2xl">
-              <div className="text-center mb-8">
-                <div className="text-4xl mb-4">💬</div>
-                <h2 className="text-lg md:text-xl font-medium text-gray-900 mb-2">
-                  How can I help you today?
+              <div className="text-center mb-10">
+                <div className="mb-6 flex justify-center">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                    <svg className="w-8 h-8 text-primary" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z" />
+                    </svg>
+                  </div>
+                </div>
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
+                  Start a conversation
                 </h2>
-                <p className="text-sm text-gray-600">
-                  Ask me anything or try a suggestion below
+                <p className="text-base text-muted-foreground max-w-sm mx-auto">
+                  Ask me anything or choose from suggested prompts below to get started
                 </p>
               </div>
-              
+
               {/* Suggested Prompts */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                 {SUGGESTED_PROMPTS.map((prompt, index) => (
                   <button
                     key={index}
                     onClick={() => handlePromptClick(prompt)}
-                    className="text-left p-3 md:p-4 rounded-lg bg-gray-50 hover:bg-gray-100 border border-gray-200 transition-all text-sm text-gray-700"
+                    className="text-left p-4 md:p-5 rounded-lg bg-card border border-border hover:border-primary/40 hover:bg-card/80 hover:shadow-md transition-all duration-200 text-sm text-foreground group"
                   >
-                    {prompt}
+                    <div className="flex items-start gap-3">
+                      <div className="w-2 h-2 rounded-full bg-primary mt-1.5 flex-shrink-0 group-hover:scale-125 transition-transform" />
+                      <span className="group-hover:text-primary transition-colors">{prompt}</span>
+                    </div>
                   </button>
                 ))}
               </div>
@@ -509,26 +536,19 @@ export default function Home() {
           >
             <div
               className={`${
-                message.role === 'user' 
-                  ? 'max-w-[90%] sm:max-w-[85%] md:max-w-[80%]' 
+                message.role === 'user'
+                  ? 'max-w-[90%] sm:max-w-[85%] md:max-w-[80%]'
                   : 'w-full'
               }`}
             >
-              {/* Label */}
-              <div className={`text-xs font-medium mb-1.5 ${
-                message.role === 'user' ? 'text-right text-gray-600' : 'text-left text-gray-600'
-              }`}>
-                {message.role === 'user' ? 'User' : 'AI Assistant'}
-              </div>
-              
               {/* Message bubble */}
-              <div className={`rounded-xl px-4 py-3 md:px-5 md:py-4 ${
+              <div className={`rounded-lg px-4 py-3 md:px-5 md:py-4 ${
                 message.role === 'user'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-50 border border-gray-200'
+                  ? 'bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-md hover:shadow-lg transition-shadow'
+                  : 'bg-card border border-border hover:border-primary/20 transition-all'
               }`}>
                 <div className={`${message.role === 'user' ? 'leading-normal' : 'markdown-content leading-relaxed'} text-sm md:text-base ${
-                  message.role === 'user' ? 'text-white' : 'text-gray-900'
+                  message.role === 'user' ? 'text-primary-foreground' : 'text-foreground'
                 }`}>
                   {message.role === 'assistant' ? (
                     (() => {
@@ -609,77 +629,77 @@ export default function Home() {
         <div ref={messagesEndRef} />
       </main>
 
-      {/* Input Area */}
-      <form 
-        onSubmit={handleSubmit} 
-        className="bg-white border border-gray-200 rounded-xl p-3 md:p-4 shadow-sm"
-        aria-label="Chat input form"
-      >
-        <div className="flex gap-2">
-          <label htmlFor="chat-input" className="sr-only">
-            Type your message
-          </label>
-          <input
-            id="chat-input"
-            ref={inputRef}
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Message..."
-            disabled={isStreaming}
-            aria-label="Message input"
-            aria-required="true"
-            aria-describedby="input-hint"
-            className="flex-1 bg-transparent border-none outline-none px-3 py-2 text-sm md:text-base text-gray-900 placeholder-gray-400 disabled:opacity-50"
-          />
-          <span id="input-hint" className="sr-only">
-            Press Enter to send message
-          </span>
-          {isStreaming ? (
-            <button
-              type="button"
-              onClick={handleStopGeneration}
-              aria-label="Stop generation"
-              className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm rounded-lg transition-all flex items-center gap-1.5"
-            >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <rect x="6" y="6" width="12" height="12" rx="1" />
-              </svg>
-              <span className="hidden sm:inline">Stop</span>
-            </button>
-          ) : (
-            <button
-              type="submit"
-              disabled={!input.trim()}
-              aria-label="Send message"
-              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-all flex items-center gap-1.5"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              <span className="hidden sm:inline">Send</span>
-            </button>
-          )}
-        </div>
-      </form>
-
-      {/* Scroll to Bottom Button - Fixed to viewport */}
-      {showScrollButton && (
-        <button
-          onClick={scrollToBottom}
-          className="fixed bottom-24 right-6 p-3 bg-white border border-gray-300 rounded-full shadow-lg hover:bg-gray-50 hover:shadow-xl transition-all z-50 group"
-          aria-label="Scroll to bottom"
+        {/* Input Area */}
+        <form
+          onSubmit={handleSubmit}
+          className="bg-card border border-border rounded-lg p-4 md:p-5 shadow-md hover:shadow-lg hover:border-primary/30 transition-all duration-200"
+          aria-label="Chat input form"
         >
-          <svg 
-            className="w-5 h-5 text-gray-600 group-hover:text-gray-900" 
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24"
+          <div className="flex gap-3">
+            <label htmlFor="chat-input" className="sr-only">
+              Type your message
+            </label>
+            <input
+              id="chat-input"
+              ref={inputRef}
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask me anything..."
+              disabled={isStreaming}
+              aria-label="Message input"
+              aria-required="true"
+              aria-describedby="input-hint"
+              className="flex-1 bg-transparent border-none outline-none px-2 py-2 text-sm md:text-base text-foreground placeholder-muted-foreground disabled:opacity-50 font-medium"
+            />
+            <span id="input-hint" className="sr-only">
+              Press Enter to send message
+            </span>
+            {isStreaming ? (
+              <button
+                type="button"
+                onClick={handleStopGeneration}
+                aria-label="Stop generation"
+                className="px-4 py-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground text-sm rounded-lg transition-all duration-200 flex items-center gap-2 font-medium shadow-sm"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <rect x="6" y="6" width="12" height="12" rx="1" />
+                </svg>
+                <span className="hidden sm:inline">Stop</span>
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={!input.trim()}
+                aria-label="Send message"
+                className="px-4 py-2 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed text-primary-foreground text-sm rounded-lg transition-all duration-200 flex items-center gap-2 font-medium shadow-sm disabled:shadow-none"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span className="hidden sm:inline">Send</span>
+              </button>
+            )}
+          </div>
+        </form>
+
+        {/* Scroll to Bottom Button - Fixed to viewport */}
+        {showScrollButton && (
+          <button
+            onClick={scrollToBottom}
+            className="fixed bottom-24 right-6 p-3 bg-card border border-border rounded-full shadow-lg hover:shadow-xl hover:border-primary/40 hover:bg-card/90 transition-all duration-200 z-50 group"
+            aria-label="Scroll to bottom"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-          </svg>
-        </button>
-      )}
+            <svg
+              className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
+          </button>
+        )}
       </div>
     </div>
   );
