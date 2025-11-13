@@ -1,6 +1,6 @@
 'use client';
 
-import { FiSettings, FiTrash2, FiBookOpen, FiMessageCircle } from 'react-icons/fi';
+import { FiSettings, FiTrash2, FiBookOpen, FiMessageCircle, FiMenu, FiSun, FiMoon } from 'react-icons/fi';
 
 interface HeaderProps {
   provider: 'gemini' | 'huggingface' | 'deepseek';
@@ -10,6 +10,9 @@ interface HeaderProps {
   messagesCount: number;
   isStreaming: boolean;
   onClearClick: () => void;
+  onToggleSidebar: () => void;
+  isDarkMode: boolean;
+  onToggleDarkMode: () => void;
 }
 
 export function Header({
@@ -20,32 +23,49 @@ export function Header({
   messagesCount,
   isStreaming,
   onClearClick,
+  onToggleSidebar,
+  isDarkMode,
+  onToggleDarkMode,
 }: HeaderProps) {
   return (
-    <header className="mb-8 md:mb-10">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-6">
-        <div className="flex items-end gap-3">
-          <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow">
-            <FiMessageCircle className="w-6 h-6 md:w-7 md:h-7 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">
-              AI Chat
-            </h1>
-            <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 font-medium">
-              Made by{' '}
-              <a
-                href="https://yasir.qzz.io"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 dark:text-blue-400 hover:underline font-semibold"
-              >
-                Yasir
-              </a>
-            </p>
+    <header className="mb-6 md:mb-8">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        {/* Left Section: Sidebar Toggle + Logo */}
+        <div className="flex items-center gap-2 md:gap-3">
+          {/* Sidebar Toggle Button - works on all screen sizes */}
+          <button
+            onClick={onToggleSidebar}
+            className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+            aria-label="Toggle sidebar"
+            title="Toggle sidebar"
+          >
+            <FiMenu className="w-5 h-5" />
+          </button>
+          
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center shadow-md">
+              <FiMessageCircle className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">
+                AI Chat
+              </h1>
+              <p className="text-xs text-gray-600 font-medium">
+                Made by{' '}
+                <a
+                  href="https://yasir.qzz.io"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline font-semibold"
+                >
+                  Yasir
+                </a>
+              </p>
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        {/* Right Section: Controls */}
+        <div className="flex items-center gap-2 flex-shrink-0">
           <div className="relative">
             <label htmlFor="provider-select" className="sr-only">
               Select AI Provider
@@ -73,11 +93,20 @@ export function Header({
           </div>
 
           <button
+            onClick={onToggleDarkMode}
+            className="p-2.5 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200"
+            aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            title={isDarkMode ? 'Light mode' : 'Dark mode'}
+          >
+            {isDarkMode ? <FiSun className="w-5 h-5" /> : <FiMoon className="w-5 h-5" />}
+          </button>
+
+          <button
             onClick={onSystemPromptClick}
             className={`p-2.5 rounded-lg transition-all duration-200 ${
               systemMessage
                 ? 'text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50 shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
             }`}
             aria-label="System prompt"
             title="Set system prompt"
@@ -88,7 +117,7 @@ export function Header({
           {messagesCount > 0 && (
             <button
               onClick={onClearClick}
-              className="p-2.5 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-all duration-200"
+              className="p-2.5 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200"
               aria-label="Clear conversation"
               title="Clear conversation"
             >

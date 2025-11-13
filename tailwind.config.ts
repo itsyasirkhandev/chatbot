@@ -71,6 +71,35 @@ const config: Config = {
         serif: ["var(--font-serif)"],
         mono: ["var(--font-mono)"],
       },
+      keyframes: {
+        shimmer: {
+          '0%': { 
+            opacity: '0.5',
+            backgroundColor: 'rgb(209 213 219)' // gray-300
+          },
+          '50%': { 
+            opacity: '1',
+            backgroundColor: 'rgb(229 231 235)' // gray-200
+          },
+          '100%': { 
+            opacity: '0.5',
+            backgroundColor: 'rgb(209 213 219)' // gray-300
+          },
+        },
+        'fade-in': {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        spin: {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' },
+        },
+      },
+      animation: {
+        shimmer: 'shimmer 1.5s ease-in-out infinite',
+        'fade-in': 'fade-in 0.3s ease-in',
+        spin: 'spin 1s linear infinite',
+      },
     },
   },
   plugins: [],

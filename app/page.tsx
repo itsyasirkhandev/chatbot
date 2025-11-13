@@ -8,6 +8,7 @@ import { CodeBlock } from './components/CodeBlock';
 import { ThinkingMessage } from './components/ThinkingMessage';
 import { SkeletonLoader } from './components/SkeletonLoader';
 import { Header } from './components/Header';
+import { Sidebar, Conversation } from './components/Sidebar';
 import { FiSend, FiSquare } from 'react-icons/fi';
 
 interface Message {
@@ -15,7 +16,8 @@ interface Message {
   content: string;
 }
 
-const STORAGE_KEY = 'gemini-chat-history';
+const CONVERSATIONS_KEY = 'ai-chat-conversations';
+const CURRENT_CONVERSATION_KEY = 'ai-chat-current-id';
 
 const SUGGESTED_PROMPTS = [
   "Explain quantum computing in simple terms",
@@ -89,6 +91,8 @@ function parseThinkingContent(content: string): { thinking: string; response: st
 }
 
 export default function Home() {
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
@@ -98,45 +102,157 @@ export default function Home() {
   const [showSystemPrompt, setShowSystemPrompt] = useState(false);
   const [systemMessage, setSystemMessage] = useState<string>('');
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
-  const [showSkeleton, setShowSkeleton] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Default open on desktop
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
-  const skeletonTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [announcement, setAnnouncement] = useState('');
 
-  // Load conversation from localStorage on mount (client-side only)
+  // Handle dark mode
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Load dark mode preference
+      const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+      setIsDarkMode(savedDarkMode);
+      
+      // Apply dark mode class to html element
+      if (savedDarkMode) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+  }, []);
+
+  // Toggle dark mode
+  const handleToggleDarkMode = () => {
+    const newDarkMode = !isDarkMode;
+    setIsDarkMode(newDarkMode);
+    
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('darkMode', String(newDarkMode));
+      
+      if (newDarkMode) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+    
+    announce(newDarkMode ? 'Dark mode enabled' : 'Light mode enabled');
+  };
+
+  // Handle sidebar initial state based on screen size
+  useEffect(() => {
+    const handleResize = () => {
+      if (typeof window !== 'undefined') {
+        // Close sidebar on mobile, keep open on desktop
+        setIsSidebarOpen(window.innerWidth >= 1024);
+      }
+    };
+
+    // Set initial state
+    handleResize();
+
+    // Add resize listener
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Load conversations from localStorage on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setIsLoadingHistory(true);
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
+      
+      // Load all conversations
+      const savedConversations = localStorage.getItem(CONVERSATIONS_KEY);
+      if (savedConversations) {
         try {
-          const parsed = JSON.parse(saved);
-          setMessages(parsed);
+          const parsed = JSON.parse(savedConversations);
+          if (parsed.length > 0) {
+            setConversations(parsed);
+            
+            // Load current conversation ID
+            const savedCurrentId = localStorage.getItem(CURRENT_CONVERSATION_KEY);
+            if (savedCurrentId && parsed.find((c: Conversation) => c.id === savedCurrentId)) {
+              setCurrentConversationId(savedCurrentId);
+              const currentConv = parsed.find((c: Conversation) => c.id === savedCurrentId);
+              if (currentConv) {
+                setMessages(currentConv.messages);
+              }
+            } else {
+              // If no current ID or invalid, use the most recent
+              const mostRecent = parsed.sort((a: Conversation, b: Conversation) => b.timestamp - a.timestamp)[0];
+              setCurrentConversationId(mostRecent.id);
+              setMessages(mostRecent.messages);
+            }
+          } else {
+            // Create initial conversation if none exist
+            const initialConv: Conversation = {
+              id: Date.now().toString(),
+              title: 'New Chat',
+              messages: [],
+              timestamp: Date.now(),
+            };
+            setConversations([initialConv]);
+            setCurrentConversationId(initialConv.id);
+          }
         } catch (e) {
-          console.error('Failed to load conversation:', e);
+          console.error('Failed to load conversations:', e);
+          // Create initial conversation on error
+          const initialConv: Conversation = {
+            id: Date.now().toString(),
+            title: 'New Chat',
+            messages: [],
+            timestamp: Date.now(),
+          };
+          setConversations([initialConv]);
+          setCurrentConversationId(initialConv.id);
         }
+      } else {
+        // No saved conversations, create initial one
+        const initialConv: Conversation = {
+          id: Date.now().toString(),
+          title: 'New Chat',
+          messages: [],
+          timestamp: Date.now(),
+        };
+        setConversations([initialConv]);
+        setCurrentConversationId(initialConv.id);
       }
-      // Small delay to show the loading state
+      
       setTimeout(() => setIsLoadingHistory(false), 300);
     }
-
-    // Cleanup timeout on unmount
-    return () => {
-      if (skeletonTimeoutRef.current) {
-        clearTimeout(skeletonTimeoutRef.current);
-      }
-    };
   }, []);
 
-  // Save conversation to localStorage whenever messages change (client-side only)
+  // Save conversations to localStorage whenever they change
   useEffect(() => {
-    if (typeof window !== 'undefined' && messages.length > 0) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+    if (typeof window !== 'undefined' && conversations.length > 0) {
+      localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(conversations));
     }
-  }, [messages]);
+  }, [conversations]);
+
+  // Save current conversation ID
+  useEffect(() => {
+    if (typeof window !== 'undefined' && currentConversationId) {
+      localStorage.setItem(CURRENT_CONVERSATION_KEY, currentConversationId);
+    }
+  }, [currentConversationId]);
+
+  // Update current conversation messages when messages change
+  useEffect(() => {
+    if (currentConversationId && messages.length > 0) {
+      setConversations((prev) =>
+        prev.map((conv) =>
+          conv.id === currentConversationId
+            ? { ...conv, messages, timestamp: Date.now() }
+            : conv
+        )
+      );
+    }
+  }, [messages, currentConversationId]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -177,11 +293,100 @@ export default function Home() {
     setTimeout(() => setAnnouncement(''), 100);
   };
 
-  // Clear conversation
-  const handleClearConversation = () => {
+  // Generate conversation title from first user message
+  const generateTitle = (messages: Message[]): string => {
+    const firstUserMsg = messages.find(m => m.role === 'user');
+    if (firstUserMsg) {
+      const content = firstUserMsg.content.trim();
+      return content.length > 50 ? content.substring(0, 50) + '...' : content;
+    }
+    return 'New Chat';
+  };
+
+  // Create new conversation
+  const handleNewChat = () => {
+    const newConv: Conversation = {
+      id: Date.now().toString(),
+      title: 'New Chat',
+      messages: [],
+      timestamp: Date.now(),
+    };
+    setConversations((prev) => [newConv, ...prev]);
+    setCurrentConversationId(newConv.id);
     setMessages([]);
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(STORAGE_KEY);
+    // Close sidebar only on mobile
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setIsSidebarOpen(false);
+    }
+    announce('New chat started');
+    inputRef.current?.focus();
+  };
+
+  // Select conversation
+  const handleSelectConversation = (id: string) => {
+    const conv = conversations.find((c) => c.id === id);
+    if (conv) {
+      setCurrentConversationId(id);
+      setMessages(conv.messages);
+      // Close sidebar only on mobile after selection
+      if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+        setIsSidebarOpen(false);
+      }
+      announce(`Switched to ${conv.title}`);
+    }
+  };
+
+  // Delete conversation
+  const handleDeleteConversation = (id: string) => {
+    setConversations((prev) => {
+      const updated = prev.filter((c) => c.id !== id);
+      
+      // If deleting current conversation, switch to another or create new
+      if (id === currentConversationId) {
+        if (updated.length > 0) {
+          const mostRecent = updated.sort((a, b) => b.timestamp - a.timestamp)[0];
+          setCurrentConversationId(mostRecent.id);
+          setMessages(mostRecent.messages);
+        } else {
+          // No conversations left, create a new one
+          const newConv: Conversation = {
+            id: Date.now().toString(),
+            title: 'New Chat',
+            messages: [],
+            timestamp: Date.now(),
+          };
+          setCurrentConversationId(newConv.id);
+          setMessages([]);
+          return [newConv];
+        }
+      }
+      
+      return updated;
+    });
+    announce('Conversation deleted');
+  };
+
+  // Rename conversation
+  const handleRenameConversation = (id: string, newTitle: string) => {
+    setConversations((prev) =>
+      prev.map((conv) =>
+        conv.id === id ? { ...conv, title: newTitle } : conv
+      )
+    );
+    announce('Conversation renamed');
+  };
+
+  // Clear current conversation
+  const handleClearConversation = () => {
+    if (currentConversationId) {
+      setConversations((prev) =>
+        prev.map((conv) =>
+          conv.id === currentConversationId
+            ? { ...conv, messages: [], title: 'New Chat', timestamp: Date.now() }
+            : conv
+        )
+      );
+      setMessages([]);
     }
     setShowClearConfirm(false);
     announce('Conversation cleared');
@@ -211,11 +416,6 @@ export default function Home() {
     // Add empty assistant message to stream into
     const assistantIndex = messages.length + 1;
     setMessages((prev) => [...prev, { role: 'assistant', content: '' }]);
-
-    // Show skeleton after 300ms delay to avoid flash for fast responses
-    skeletonTimeoutRef.current = setTimeout(() => {
-      setShowSkeleton(true);
-    }, 300);
 
     // Create abort controller for this request
     const abortController = new AbortController();
@@ -297,14 +497,22 @@ export default function Home() {
       }
     } finally {
       setIsStreaming(false);
-      setShowSkeleton(false);
-      if (skeletonTimeoutRef.current) {
-        clearTimeout(skeletonTimeoutRef.current);
-        skeletonTimeoutRef.current = null;
-      }
       abortControllerRef.current = null;
       announce('Response complete.');
       inputRef.current?.focus();
+      
+      // Update conversation title if this is the first message
+      if (currentConversationId && messages.length === 0) {
+        const newMessages = [...messages, userMessage];
+        const title = generateTitle(newMessages);
+        setConversations((prev) =>
+          prev.map((conv) =>
+            conv.id === currentConversationId
+              ? { ...conv, title }
+              : conv
+          )
+        );
+      }
     }
   };
 
@@ -334,7 +542,27 @@ export default function Home() {
         Skip to chat input
       </a>
 
-      <div className="flex flex-col h-full max-w-4xl w-full mx-auto px-3 py-4 md:px-6 md:py-6">
+      {/* Sidebar */}
+      <Sidebar
+        conversations={conversations}
+        currentConversationId={currentConversationId}
+        onNewChat={handleNewChat}
+        onSelectConversation={handleSelectConversation}
+        onDeleteConversation={handleDeleteConversation}
+        onRenameConversation={handleRenameConversation}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
+
+      {/* Main Content - adjusts based on sidebar state */}
+      <div 
+        className="flex flex-col h-full transition-all duration-300 ease-in-out"
+        style={{
+          marginLeft: isSidebarOpen ? '288px' : '0',
+          width: isSidebarOpen ? 'calc(100% - 288px)' : '100%'
+        }}
+      >
+        <div className="flex flex-col h-full max-w-5xl w-full mx-auto px-3 py-4 md:px-6 md:py-6">
         <Header
           provider={provider}
           onProviderChange={setProvider}
@@ -343,6 +571,9 @@ export default function Home() {
           messagesCount={messages.length}
           isStreaming={isStreaming}
           onClearClick={() => setShowClearConfirm(true)}
+          onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+          isDarkMode={isDarkMode}
+          onToggleDarkMode={handleToggleDarkMode}
         />
 
         {/* Clear Confirmation Modal */}
@@ -422,14 +653,18 @@ export default function Home() {
       >
         {/* Loading state when fetching history from localStorage */}
         {isLoadingHistory && (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <div className="flex gap-2 justify-center mb-3">
-                <span className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                <span className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                <span className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+          <div className="flex items-start justify-start px-4 pt-8">
+            <div className="w-full max-w-4xl">
+              <div className="flex justify-start mb-4">
+                <div className="max-w-[85%] bg-card border border-border rounded-lg px-4 py-3 shadow-sm">
+                  <SkeletonLoader />
+                </div>
               </div>
-              <p className="text-sm text-gray-500">Loading conversation...</p>
+              <div className="flex justify-start">
+                <div className="max-w-[85%] bg-card border border-border rounded-lg px-4 py-3 shadow-sm">
+                  <SkeletonLoader />
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -499,20 +734,15 @@ export default function Home() {
                     (() => {
                       const isCurrentlyStreaming = isStreaming && index === messages.length - 1;
 
-                      // Show skeleton loader if message is empty/minimal and skeleton should be visible
-                      if (message.content === '' && isCurrentlyStreaming && showSkeleton) {
-                        return <SkeletonLoader showThinkingSection={false} />;
+                      // Only show bouncing dots if message is completely empty and waiting for API response
+                      if (message.content === '' && isCurrentlyStreaming) {
+                        return <SkeletonLoader />;
                       }
 
                       const { thinking, response, hasThinkTag } = parseThinkingContent(message.content);
 
-                      // For thinking models: show skeleton until we have meaningful content
+                      // For thinking models: render immediately when any content arrives
                       if (hasThinkTag) {
-                        // If we have the opening tag but minimal content, show skeleton with thinking section
-                        if (isCurrentlyStreaming && showSkeleton && thinking.length < 20 && !response) {
-                          return <SkeletonLoader showThinkingSection={true} />;
-                        }
-
                         return (
                           <ThinkingMessage
                             thinking={thinking}
@@ -522,12 +752,8 @@ export default function Home() {
                         );
                       }
 
-                      // For non-thinking models: show skeleton briefly for very short content
-                      if (isCurrentlyStreaming && showSkeleton && message.content.length < 15) {
-                        return <SkeletonLoader showThinkingSection={false} />;
-                      }
-
                       // Standard markdown rendering for non-thinking responses
+                      // Show content immediately once it starts arriving
                       return (
                         <>
                           <ReactMarkdown
@@ -644,6 +870,7 @@ export default function Home() {
             </svg>
           </button>
         )}
+        </div>
       </div>
     </div>
   );
