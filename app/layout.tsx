@@ -15,8 +15,11 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Gemini Chatbot",
-  description: "AI-powered chatbot with beautiful glassmorphism UI",
+  title: "AI Chat - Made by Yasir",
+  description: "AI-powered chatbot with beautiful UI - Made by Yasir",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
