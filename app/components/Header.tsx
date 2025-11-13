@@ -1,6 +1,7 @@
 'use client';
 
 import { FiSettings, FiTrash2, FiBookOpen, FiMessageCircle, FiMenu, FiSun, FiMoon } from 'react-icons/fi';
+import { FaGithub } from 'react-icons/fa';
 
 interface HeaderProps {
   provider: 'gemini' | 'huggingface' | 'deepseek';
@@ -135,6 +136,18 @@ export function Header({
           >
             <FiBookOpen className="w-4 h-4" />
             <span className="hidden sm:inline">Embeddings</span>
+          </a>
+
+          <a
+            href="https://github.com/itsyasirkhandev/chatbot"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/60 transition-all duration-200 flex items-center gap-1.5"
+            title="GitHub Repository"
+            aria-label="Open GitHub repository"
+          >
+            <FaGithub className="w-4 h-4" />
+            <span className="hidden sm:inline">GitHub</span>
           </a>
         </div>
       </div>
