@@ -5,11 +5,13 @@ A beautiful AI-powered chatbot built with Next.js, LangChain, and Google Gemini 
 ## Features
 
 ### Core Features
-- ✨ **Clean Minimal Design** - Beautiful light theme with gray backgrounds and solid styling
+- ✨ **Clean Minimal Design** - Beautiful light/dark theme with CSS variable-driven theming
 - 🚀 **Streaming Responses** - Real-time token streaming for instant feedback
-- 🤖 **Google Gemini 2.5 Flash** - Powered by Google's latest fast AI model
+- 🤖 **Multi-Provider Support** - Google Gemini 2.5 Flash, Hugging Face, and DeepSeek-R1
+- 🧠 **Thinking Model Support** - Automatic detection and rendering of `<think>` tags for reasoning models
 - 📱 **Responsive Design** - Works beautifully on desktop and mobile
 - 🎨 **Modern Typography** - Bricolage Grotesque headings + Inter body text
+- 🌓 **Dark Mode** - Persistent dark/light theme toggle with localStorage
 
 ### Content & Formatting
 - 📝 **Markdown Support** - Beautiful formatting with code syntax highlighting
@@ -19,9 +21,12 @@ A beautiful AI-powered chatbot built with Next.js, LangChain, and Google Gemini 
 ### User Experience
 - ♿ **Accessibility First** - WCAG compliant with screen reader support, keyboard navigation, and ARIA labels
 - 🧠 **Conversation Memory** - Chatbot remembers your entire conversation for contextual responses
-- 💾 **Persistent History** - Conversations saved to localStorage, resume after refresh
+- 💾 **Multi-Conversation Management** - Create, rename, delete, and switch between conversations
+- 📂 **Persistent History** - All conversations saved to localStorage, resume after refresh
 - 🗑️ **Clear Conversation** - Reset chat with confirmation dialog
 - ⏹️ **Stop Generation** - Cancel AI responses mid-stream
+- ⚙️ **System Prompts** - Configure custom AI behavior with system messages
+- 📊 **Document Similarity** - Built-in embeddings tool for comparing text similarity
 
 ## Design Features
 
@@ -39,11 +44,15 @@ A beautiful AI-powered chatbot built with Next.js, LangChain, and Google Gemini 
 
 ## Tech Stack
 
-- **Framework**: Next.js 16 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS with custom utility classes
-- **AI**: LangChain + Google Gemini 2.5 Flash
+- **Framework**: Next.js 16 (App Router) with React 19
+- **Language**: TypeScript with strict type checking
+- **Styling**: Tailwind CSS v4 with CSS variable-driven theming
+- **AI Providers**: 
+  - LangChain + Google Gemini 2.5 Flash (default)
+  - Hugging Face Inference API (MiniMax-M2)
+  - DeepSeek-R1 (reasoning model)
 - **Markdown**: react-markdown with GitHub Flavored Markdown & syntax highlighting
+- **Architecture**: Component-based with custom hooks for state management
 - **Deployment**: Vercel (zero-config)
 
 ## Getting Started
@@ -68,6 +77,8 @@ npm install
 3. Create a `.env.local` file in the root directory:
 ```bash
 GEMINI_API_KEY=your_api_key_here
+# Optional: Only needed if using Hugging Face or DeepSeek providers
+HUGGINGFACE_API_KEY=your_huggingface_key_here
 ```
 
 4. Start the development server:
@@ -85,13 +96,39 @@ npm run dev
 gemini-chatbot/
 ├── app/
 │   ├── api/
-│   │   └── chat/
-│   │       └── route.ts       # Streaming API endpoint
-│   ├── globals.css            # Global styles + glassmorphism utilities
-│   ├── layout.tsx             # Root layout with fonts
-│   └── page.tsx               # Main chat interface
-├── .env.local                 # Environment variables (API key)
-└── start.ps1                  # Quick start script
+│   │   ├── chat/
+│   │   │   └── route.ts          # Streaming API endpoint (multi-provider)
+│   │   └── embed/
+│   │       └── route.ts          # Embeddings & similarity API
+│   ├── components/               # Reusable UI components
+│   │   ├── ChatInput.tsx         # Message input form
+│   │   ├── ClearConfirmModal.tsx # Confirmation dialog
+│   │   ├── CodeBlock.tsx         # Code syntax highlighting
+│   │   ├── EmptyState.tsx        # Welcome screen
+│   │   ├── Header.tsx            # App header with controls
+│   │   ├── MessageBubble.tsx     # Individual message rendering
+│   │   ├── MessageList.tsx       # Messages container
+│   │   ├── Sidebar.tsx           # Conversation list
+│   │   ├── SkeletonLoader.tsx    # Loading placeholder
+│   │   ├── SystemPromptModal.tsx # System message editor
+│   │   └── ThinkingMessage.tsx   # Reasoning display
+│   ├── hooks/                    # Custom React hooks
+│   │   ├── useAnnouncements.ts   # Screen reader announcements
+│   │   ├── useConversations.ts   # Conversation management
+│   │   ├── useDarkMode.ts        # Theme toggling
+│   │   └── useScrollToBottom.ts  # Auto-scroll behavior
+│   ├── types/
+│   │   └── index.ts              # TypeScript interfaces
+│   ├── utils/
+│   │   └── chat.ts               # Utility functions (parsing, etc.)
+│   ├── embeding/
+│   │   └── page.tsx              # Document similarity tool
+│   ├── globals.css               # Global styles + theme variables
+│   ├── layout.tsx                # Root layout with fonts
+│   └── page.tsx                  # Main chat interface (324 lines)
+├── .env.local                    # Environment variables
+├── WARP.md                       # Warp AI context (local only)
+└── start.ps1                     # Quick start script
 ```
 
 ## How It Works
@@ -179,6 +216,7 @@ When prompted, add the `GEMINI_API_KEY` environment variable.
 | Variable | Description | Required |
 |----------|-------------|----------|
 | `GEMINI_API_KEY` | Google Gemini API key | Yes |
+| `HUGGINGFACE_API_KEY` | Hugging Face API key | Only when using HF/DeepSeek providers |
 
 ## Accessibility Features
 
@@ -559,19 +597,37 @@ npm run dev
 - `npm run build` - Build for production
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
-- `npm run type-check` - Run TypeScript type checking
+- `npx tsc --noEmit` - Run TypeScript type checking
 
-### Code Structure
-```
-app/
-├── api/chat/
-│   └── route.ts          # API endpoint for chat
-├── components/
-│   └── CodeBlock.tsx     # Code display component
-├── globals.css           # Global styles
-├── layout.tsx            # App layout
-└── page.tsx              # Main chat interface
-```
+### Code Architecture
+
+The application follows a **modular component-based architecture**:
+
+**Frontend (app/page.tsx - 324 lines)**
+- Main orchestrator using custom hooks for state management
+- Delegates rendering to focused, single-responsibility components
+- Handles API communication and streaming logic
+
+**Custom Hooks (app/hooks/)**
+- `useConversations` - Full CRUD for conversation management
+- `useDarkMode` - Theme state with localStorage persistence
+- `useScrollToBottom` - Auto-scroll and scroll button visibility
+- `useAnnouncements` - Screen reader announcements for a11y
+
+**UI Components (app/components/)**
+- Atomic, reusable components with clear props interfaces
+- Separated by concern: modals, messages, input, layout
+- Each component handles its own rendering and local state
+
+**API Routes (app/api/)**
+- `chat/route.ts` - Multi-provider streaming chat (Gemini/HF/DeepSeek)
+- `embed/route.ts` - Document embeddings and similarity
+
+**Benefits:**
+- 68% reduction in main page.tsx size (878 → 324 lines)
+- Improved testability and maintainability
+- Better IDE intellisense and type safety
+- Easier onboarding for new developers
 
 ### Contributing
 
@@ -600,25 +656,33 @@ We welcome contributions! Please follow these steps:
 - Test with screen readers
 - Use semantic HTML elements
 
-## Future Enhancements
+## Feature Status
 
 ✅ = Implemented | 🔜 = Planned
 
-- ✅ Conversation history persistence (localStorage)
-- ✅ Clear conversation button
-- ✅ Copy code blocks button
-- 🔜 Multi-conversation sidebar with session management
+### Recently Completed (2025)
+- ✅ **Multi-conversation sidebar** - Create, switch, rename, delete conversations
+- ✅ **Dark/light theme toggle** - Persistent theme with localStorage
+- ✅ **System prompts** - Configure AI behavior with custom instructions
+- ✅ **Multi-provider support** - Gemini, Hugging Face, DeepSeek-R1
+- ✅ **Thinking model support** - Automatic `<think>` tag detection and rendering
+- ✅ **Document embeddings tool** - Text similarity comparison
+- ✅ **Component refactoring** - Modular architecture with custom hooks
+- ✅ **Conversation history persistence** - localStorage with full CRUD
+- ✅ **Copy code blocks** - One-click copy with visual feedback
+- ✅ **Clear conversation** - Reset with confirmation dialog
+
+### Planned Enhancements
 - 🔜 Message regeneration and editing
 - 🔜 Export conversation as Markdown/JSON
-- 🔜 Dark/light theme toggle
 - 🔜 Voice input/output
 - 🔜 Image upload support (Gemini Vision)
 - 🔜 Auto-resize textarea for long prompts
 - 🔜 Keyboard shortcuts (Ctrl+K to clear, etc.)
 - 🔜 Multi-language support
-- 🔜 Plugin system for custom AI models
-- 🔜 Real-time collaboration features
 - 🔜 Advanced conversation search
+- 🔜 Conversation folders/organization
+- 🔜 Streaming indicators for thinking models
 
 ## License
 
