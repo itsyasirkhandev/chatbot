@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import { CodeBlock } from './components/CodeBlock';
 import { ThinkingMessage } from './components/ThinkingMessage';
+import { SkeletonLoader } from './components/SkeletonLoader';
 
 interface Message {
   role: 'user' | 'assistant' | 'system';
@@ -95,10 +96,12 @@ export default function Home() {
   const [showSystemPrompt, setShowSystemPrompt] = useState(false);
   const [systemMessage, setSystemMessage] = useState<string>('');
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const [showSkeleton, setShowSkeleton] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const skeletonTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [announcement, setAnnouncement] = useState('');
 
   // Load conversation from localStorage on mount (client-side only)
@@ -117,6 +120,13 @@ export default function Home() {
       // Small delay to show the loading state
       setTimeout(() => setIsLoadingHistory(false), 300);
     }
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (skeletonTimeoutRef.current) {
+        clearTimeout(skeletonTimeoutRef.current);
+      }
+    };
   }, []);
 
   // Save conversation to localStorage whenever messages change (client-side only)
@@ -200,6 +210,11 @@ export default function Home() {
     const assistantIndex = messages.length + 1;
     setMessages((prev) => [...prev, { role: 'assistant', content: '' }]);
 
+    // Show skeleton after 300ms delay to avoid flash for fast responses
+    skeletonTimeoutRef.current = setTimeout(() => {
+      setShowSkeleton(true);
+    }, 300);
+
     // Create abort controller for this request
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
@@ -280,6 +295,11 @@ export default function Home() {
       }
     } finally {
       setIsStreaming(false);
+      setShowSkeleton(false);
+      if (skeletonTimeoutRef.current) {
+        clearTimeout(skeletonTimeoutRef.current);
+        skeletonTimeoutRef.current = null;
+      }
       abortControllerRef.current = null;
       announce('Response complete.');
       inputRef.current?.focus();
@@ -553,32 +573,35 @@ export default function Home() {
                   {message.role === 'assistant' ? (
                     (() => {
                       const isCurrentlyStreaming = isStreaming && index === messages.length - 1;
-                      
-                      // Show loading indicator if message is empty and streaming
-                      if (message.content === '' && isCurrentlyStreaming) {
-                        return (
-                          <div className="flex gap-1.5">
-                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} aria-hidden="true"></span>
-                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} aria-hidden="true"></span>
-                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} aria-hidden="true"></span>
-                          </div>
-                        );
+
+                      // Show skeleton loader if message is empty/minimal and skeleton should be visible
+                      if (message.content === '' && isCurrentlyStreaming && showSkeleton) {
+                        return <SkeletonLoader showThinkingSection={false} />;
                       }
-                      
+
                       const { thinking, response, hasThinkTag } = parseThinkingContent(message.content);
-                      
-                      // Versatile thinking detection: Show thinking UI if <think> tags are present
-                      // Works for any model, not just hardcoded ones
+
+                      // For thinking models: show skeleton until we have meaningful content
                       if (hasThinkTag) {
+                        // If we have the opening tag but minimal content, show skeleton with thinking section
+                        if (isCurrentlyStreaming && showSkeleton && thinking.length < 20 && !response) {
+                          return <SkeletonLoader showThinkingSection={true} />;
+                        }
+
                         return (
-                          <ThinkingMessage 
-                            thinking={thinking} 
+                          <ThinkingMessage
+                            thinking={thinking}
                             response={response}
                             isStreaming={isCurrentlyStreaming}
                           />
                         );
                       }
-                      
+
+                      // For non-thinking models: show skeleton briefly for very short content
+                      if (isCurrentlyStreaming && showSkeleton && message.content.length < 15) {
+                        return <SkeletonLoader showThinkingSection={false} />;
+                      }
+
                       // Standard markdown rendering for non-thinking responses
                       return (
                         <>
@@ -589,15 +612,15 @@ export default function Home() {
                               code({ node, inline, className, children, ...props }: any) {
                                 if (!inline && className) {
                                   return (
-                                    <CodeBlock 
-                                      className={className} 
+                                    <CodeBlock
+                                      className={className}
                                       inline={false}
                                     >
                                       {children}
                                     </CodeBlock>
                                   );
                                 }
-                                
+
                                 return (
                                   <code className="bg-gray-200 text-gray-800 px-1.5 py-0.5 rounded text-[0.9em] font-mono">
                                     {children}
@@ -609,7 +632,7 @@ export default function Home() {
                             {message.content}
                           </ReactMarkdown>
                           {isCurrentlyStreaming && (
-                            <span 
+                            <span
                               className="inline-block w-1.5 h-4 ml-1 bg-gray-400 animate-pulse"
                               aria-label="Typing indicator"
                             ></span>
