@@ -247,7 +247,10 @@ export default function Home() {
         <div className="flex flex-col h-full max-w-5xl w-full mx-auto px-3 py-4 md:px-6 md:py-6">
           <Header
             provider={provider}
-            onProviderChange={setProvider}
+            onProviderChange={(p) => {
+              // Lock model selection once a conversation has started
+              if (messages.length === 0) setProvider(p);
+            }}
             systemMessage={systemMessage}
             onSystemPromptClick={() => setShowSystemPrompt(true)}
             messagesCount={messages.length}
