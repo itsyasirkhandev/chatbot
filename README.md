@@ -1,4 +1,4 @@
-# Gemini Chatbot
+# Chatbot
 
 A beautiful AI-powered chatbot built with Next.js, LangChain, and Google Gemini 2.5 Flash, featuring a clean and minimal design aesthetic.
 
